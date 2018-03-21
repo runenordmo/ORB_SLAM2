@@ -1,3 +1,10 @@
+# ORB-SLAM2-CNN
+
+This project will aim to replace the hand-crafted ORB features in ORB-SLAM2 with learned CNN features, in the hope to be more robust to changes in scene appearance (e.g. illumination changes, viewpoint changes).
+
+The description of the original project follows below.
+
+
 # ORB-SLAM2
 **Authors:** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
 
