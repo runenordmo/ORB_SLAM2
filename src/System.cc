@@ -98,7 +98,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     if(bUseViewer)
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+#ifdef __APPLE__
+        // Start visualisation thread on the main loop using StartViewer instead
+#else
         mptViewer = new thread(&Viewer::Run, mpViewer);
+#endif
         mpTracker->SetViewer(mpViewer);
     }
 
@@ -487,6 +491,12 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 {
     unique_lock<mutex> lock(mMutexState);
     return mTrackedKeyPointsUn;
+}
+
+void System::StartViewer()
+{
+    if(mpViewer)
+        mpViewer->Run();
 }
 
 } //namespace ORB_SLAM

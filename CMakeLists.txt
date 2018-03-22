@@ -70,13 +70,24 @@ src/Initializer.cc
 src/Viewer.cc
 )
 
-target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${Pangolin_LIBRARIES}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-)
+if(APPLE)
+   target_link_libraries(${PROJECT_NAME}
+   ${OpenCV_LIBS}
+   ${EIGEN3_LIBS}
+   ${Pangolin_LIBRARIES}
+   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.dylib
+   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.dylib
+   )
+else()
+   target_link_libraries(${PROJECT_NAME}
+   ${OpenCV_LIBS}
+   ${EIGEN3_LIBS}
+   ${Pangolin_LIBRARIES}
+   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+   )
+endif()
+
 
 # Build examples
 
