@@ -7,9 +7,23 @@ import matplotlib.pyplot as plt
 import math
 from PIL import ImageDraw ,Image
 import ctypes as ct
+import os
 
 image_width = 1241;
 image_height = 376;
+
+
+def get_images(path, ext):
+    assert path.endswith('/'), "path must end with '/'"
+    assert ext.startswith('.'), "ext must start with '.'"
+    files = os.listdir(path)
+    files.sort()
+    images = []
+    for f in files:
+        if f.endswith(ext):
+            images.append(f)
+    return images
+
 
 def split_image(img):
     assert img.size == (image_width, image_height), "Image size does not match"
@@ -63,7 +77,7 @@ def get_descriptors(nr, features):
     return descriptors
 
 
-def save_debug_img(parts, descriptors):
+def save_debug_img(img_name, parts, descriptors):
     new_img = Image.new('RGB', (224*5,224))
     for i in range(0,len(parts)):
         new_img.paste(parts[i], (224*i,0))
@@ -73,11 +87,10 @@ def save_debug_img(parts, descriptors):
         x,y,arr = desc
         draw.rectangle((4*x,4*y,4*(x+1),4*(y+1)), outline=(255,0,0))
 
-    new_img.save('output/output_with_features.png')
+    new_img.save('output/' + img_name + '.with_features.png')
 
 
-def write_descriptors(descriptors):
-    file = open('output/descriptors.dat', 'wb')
+def write_descriptors(file, descriptors):
     for desc in descriptors:
         x,y,arr = desc
         file.write(ct.c_int32(x))
@@ -88,20 +101,24 @@ def write_descriptors(descriptors):
     
 
 
+
 base_model = VGG16(weights='imagenet')
 model = Model(inputs=base_model.input, outputs=base_model.get_layer('block3_conv3').output)
 
-img_path = 'data/00/000000.png'
-img = image.load_img(img_path)
-parts = split_image(img)
-new_img = Image.new('RGB', (224*5,224))
-descriptors = []
-for i in range(0,len(parts)):
-    features = produce_featuremaps(model, parts[i])
-    descriptors += get_descriptors(i, features)
 
-print(f'Found {len(descriptors)} descriptors')
-save_debug_img(parts, descriptors)
-write_descriptors(descriptors)
+path = 'data/00/'
+images = get_images(path, '.png')
+file = open('output/descriptors.dat', 'wb')
+for img_name in images:
+    img = image.load_img(path + img_name)
+    parts = split_image(img)
+    descriptors = []
+    for i in range(0,len(parts)):
+        features = produce_featuremaps(model, parts[i])
+        descriptors += get_descriptors(i, features)
+
+    print(f'{img_name}: Found {len(descriptors)} descriptors')
+    save_debug_img(img_name, parts, descriptors)
+    write_descriptors(file, descriptors)
 
 
