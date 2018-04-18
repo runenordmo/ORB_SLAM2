@@ -54,27 +54,48 @@ def produce_featuremaps(model, img):
 
     return model.predict(x)
 
+def calc_color(d):
+    assert d < 512, "Only color mapping available until 512"
 
+    mask = 7
+    r = (d & (mask << 6)) >> 6
+    g = (d & (mask << 3)) >> 3
+    b = (d & (mask << 0)) >> 0
+    r = 255 - (r * 18)
+    g = 255 - (g * 18)
+    b = 255 - (b * 18)
+    return (r,g,b)
 
 def get_descriptors(nr, features):
     assert features.shape == (1,fm_size,fm_size,depth), "features must be 1x56x56x256"
 
     descriptors = []
-    for x in range(1, fm_size-2):
-        for y in range(1, fm_size-2):
+    for d in range(0,depth-1):
+        tmp = features[0,:,:,d]
+        max = np.unravel_index(np.argmax(tmp, axis=None), tmp.shape)
+        # print(str(max) + ': ' + str(tmp[max]))
+        if tmp[max] > 999:
+            x = max[1]
+            img_x = nr*fm_size + x
+            y = max[0]
             cut = features[0,y,x,:] 
-            # if np.sum(cut) > 80000:
-            #     img_x = nr*56 + x
-            #     s = np.sum(cut)
-            #     # print(s)
-            #     print(f"({img_x},{y}) = {s}")
-            #     descriptors.append((img_x,y,cut))
+            descriptors.append((img_x,y,cut,calc_color(d)))
 
-            for d in range(0,depth-1):
-                if features[0,y,x,d] > 5000:
-                    img_x = nr*fm_size + x
-                    descriptors.append((img_x,y,cut))
-                    break
+    # for x in range(1, 54):
+    #     for y in range(1, 54):
+    #         cut = features[0,y,x,:] 
+    #         # if np.sum(cut) > 80000:
+    #         #     img_x = nr*56 + x
+    #         #     s = np.sum(cut)
+    #         #     # print(s)
+    #         #     print(f"({img_x},{y}) = {s}")
+    #         #     descriptors.append((img_x,y,cut))
+
+    #         for d in range(0,255):
+    #             if features[0,y,x,d] > 5000:
+    #                 img_x = nr*56 + x
+    #                 descriptors.append((img_x,y,cut))
+    #                 break
 
     return descriptors
 
@@ -86,15 +107,15 @@ def save_debug_img(img_name, parts, descriptors):
 
     draw = ImageDraw.Draw(new_img)
     for desc in descriptors:
-        x,y,arr = desc
-        draw.rectangle((8*x,8*y,8*(x+1),8*(y+1)), outline=(255,0,0))
+        x,y,arr,col = desc
+        draw.rectangle((8*x,8*y,8*(x+1),8*(y+1)), outline=col)
 
     new_img.save('output/' + img_name + '.with_features.png')
 
 
 def write_descriptors(file, descriptors):
     for desc in descriptors:
-        x,y,arr = desc
+        x,y,arr,_ = desc
         file.write(ct.c_int32(x))
         file.write(ct.c_int32(y))
         arr.astype('float32').tofile(file)
