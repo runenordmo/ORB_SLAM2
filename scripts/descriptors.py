@@ -8,6 +8,7 @@ import math
 from PIL import ImageDraw ,Image
 import ctypes as ct
 import os
+import argparse
 
 image_width = 1241;
 image_height = 376;
@@ -100,7 +101,7 @@ def get_descriptors(nr, features):
     return descriptors
 
 
-def save_debug_img(img_name, parts, descriptors):
+def save_debug_img(output, img_name, parts, descriptors):
     new_img = Image.new('RGB', (224*5,224))
     for i in range(0,len(parts)):
         new_img.paste(parts[i], (224*i,0))
@@ -110,7 +111,7 @@ def save_debug_img(img_name, parts, descriptors):
         x,y,arr,col = desc
         draw.rectangle((8*x,8*y,8*(x+1),8*(y+1)), outline=col)
 
-    new_img.save('output/' + img_name + '.with_features.png')
+    new_img.save(output + img_name + '.with_features.png')
 
 
 def write_descriptors(file, descriptors):
@@ -123,17 +124,25 @@ def write_descriptors(file, descriptors):
     file.write(ct.c_int32(-1))
     
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--path", help="path to image sequence", default="data/00/")
+parser.add_argument("-o", "--output", help="path to store output files", default="output/")
+parser.add_argument("-e", "--ext", help="extension of the image files", default=".png")
+args = parser.parse_args()
+
+assert args.path.endswith('/'), "path must end with '/'"
+assert args.output.endswith('/'), "output must end with '/'"
+assert args.ext.startswith('.'), "ext must start with '.'"
 
 
 base_model = VGG16(weights='imagenet')
 model = Model(inputs=base_model.input, outputs=base_model.get_layer('block4_conv3').output)
 
 
-path = 'data/00/'
-images = get_images(path, '.png')
-file = open('output/descriptors.dat', 'wb')
+images = get_images(args.path, args.ext)
+file = open(args.output + 'descriptors.dat', 'wb')
 for img_name in images:
-    img = image.load_img(path + img_name)
+    img = image.load_img(args.path + img_name)
     parts = split_image(img)
     descriptors = []
     for i in range(0,len(parts)):
@@ -141,7 +150,7 @@ for img_name in images:
         descriptors += get_descriptors(i, features)
 
     print(f'{img_name}: Found {len(descriptors)} descriptors')
-    save_debug_img(img_name, parts, descriptors)
+    save_debug_img(args.output, img_name, parts, descriptors)
     write_descriptors(file, descriptors)
 
 
