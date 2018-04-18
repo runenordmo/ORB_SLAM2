@@ -1,7 +1,7 @@
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing import image
 from keras.applications.vgg16 import preprocess_input
-from keras.models import Model
+from model import Model
 import numpy as np
 import matplotlib.pyplot as plt
 import math
