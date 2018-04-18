@@ -12,6 +12,8 @@ import os
 image_width = 1241;
 image_height = 376;
 
+depth = 512
+fm_size = 28
 
 def get_images(path, ext):
     assert path.endswith('/'), "path must end with '/'"
@@ -55,11 +57,11 @@ def produce_featuremaps(model, img):
 
 
 def get_descriptors(nr, features):
-    assert features.shape == (1,56,56,256), "features must be 1x56x56x256"
+    assert features.shape == (1,fm_size,fm_size,depth), "features must be 1x56x56x256"
 
     descriptors = []
-    for x in range(1, 54):
-        for y in range(1, 54):
+    for x in range(1, fm_size-2):
+        for y in range(1, fm_size-2):
             cut = features[0,y,x,:] 
             # if np.sum(cut) > 80000:
             #     img_x = nr*56 + x
@@ -68,9 +70,9 @@ def get_descriptors(nr, features):
             #     print(f"({img_x},{y}) = {s}")
             #     descriptors.append((img_x,y,cut))
 
-            for d in range(0,255):
+            for d in range(0,depth-1):
                 if features[0,y,x,d] > 5000:
-                    img_x = nr*56 + x
+                    img_x = nr*fm_size + x
                     descriptors.append((img_x,y,cut))
                     break
 
@@ -85,7 +87,7 @@ def save_debug_img(img_name, parts, descriptors):
     draw = ImageDraw.Draw(new_img)
     for desc in descriptors:
         x,y,arr = desc
-        draw.rectangle((4*x,4*y,4*(x+1),4*(y+1)), outline=(255,0,0))
+        draw.rectangle((8*x,8*y,8*(x+1),8*(y+1)), outline=(255,0,0))
 
     new_img.save('output/' + img_name + '.with_features.png')
 
@@ -103,7 +105,7 @@ def write_descriptors(file, descriptors):
 
 
 base_model = VGG16(weights='imagenet')
-model = Model(inputs=base_model.input, outputs=base_model.get_layer('block3_conv3').output)
+model = Model(inputs=base_model.input, outputs=base_model.get_layer('block4_conv3').output)
 
 
 path = 'data/00/'
