@@ -26,6 +26,11 @@
 
 #include<mutex>
 
+
+// ADDED
+#include "SURFextractor.h"
+// END ADDED
+
 namespace ORB_SLAM2
 {
 
@@ -43,6 +48,12 @@ cv::Mat FrameDrawer::DrawFrame()
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
+
+    //ADDED
+    SURFextractor surfExtract;
+    vector<cv::KeyPoint> currentKeysSURF;
+    cv::Mat currentDescsSURF;
+    //END ADDED
 
     //Copy variables within scoped mutex
     {
@@ -64,6 +75,9 @@ cv::Mat FrameDrawer::DrawFrame()
             vCurrentKeys = mvCurrentKeys;
             vbVO = mvbVO;
             vbMap = mvbMap;
+
+            //ADDED
+            surfExtract = mSurfExtract;
         }
         else if(mState==Tracking::LOST)
         {
@@ -92,6 +106,17 @@ cv::Mat FrameDrawer::DrawFrame()
         mnTrackedVO=0;
         const float r = 5;
         const int n = vCurrentKeys.size();
+
+        //ADDED
+        bool bPlotSurfFeaturesOnFrame = false;
+        if (bPlotSurfFeaturesOnFrame){
+            surfExtract(im, cv::Mat(), currentKeysSURF, currentDescsSURF);
+            for (int j = 0; j < 300; ++j) {
+                cv::circle(im,currentKeysSURF[j].pt,2,cv::Scalar(255,0,0),-1);
+            }
+        }
+        //END ADDED
+
         for(int i=0;i<n;i++)
         {
             if(vbVO[i] || vbMap[i])

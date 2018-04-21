@@ -31,6 +31,10 @@
 #include<mutex>
 
 
+//ADDED
+#include "SURFextractor.h"
+
+
 namespace ORB_SLAM2
 {
 
@@ -66,6 +70,12 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+
+    // ADDED
+    SURFextractor mSurfExtract;
+    vector<cv::KeyPoint> mvCurrentKeysSURF;
+    cv::Mat mCurrentDescsSURF;
+
 };
 
 } //namespace ORB_SLAM

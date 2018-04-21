@@ -21,9 +21,9 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-SURFextractor::SURFextractor(int nfeatures, float scaleFactor, int nlevels) {
-    double hessian = 800.0;
-    mSurfDetector = xfeatures2d::SURF::create();
+SURFextractor::SURFextractor() {
+    double hessian = 1000.0;
+    mSurfDetector = xfeatures2d::SURF::create(hessian);
 }
 
 void SURFextractor::operator()(const cv::_InputArray &image, const cv::_InputArray &mask,

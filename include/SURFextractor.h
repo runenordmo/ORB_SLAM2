@@ -19,7 +19,7 @@ public:
     //ORBextractor(int nfeatures, float scaleFactor, int nlevels,
     //            int iniThFAST, int minThFAST);
     // NOT SURE HOW TO HANDLE THE SCALE WITH THE SURF EXTRACTOR
-    SURFextractor(int nfeatures, float scaleFactor, int nlevels);
+    SURFextractor();
 
     ~SURFextractor(){}
 
