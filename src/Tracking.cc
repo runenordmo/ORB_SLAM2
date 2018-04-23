@@ -596,7 +596,7 @@ void Tracking::MonocularInitialization()
         }
 
         // Find correspondences
-        ORBmatcher matcher(0.9,true);
+        ORBmatcher matcher(0.9,false);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
         // Check if there are enough correspondences
@@ -761,7 +761,7 @@ bool Tracking::TrackReferenceKeyFrame()
 
     // We perform first an ORB matching with the reference keyframe
     // If enough matches are found we setup a PnP solver
-    ORBmatcher matcher(0.7,true);
+    ORBmatcher matcher(0.7,false);
     vector<MapPoint*> vpMapPointMatches;
 
     int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);

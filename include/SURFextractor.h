@@ -29,6 +29,33 @@ public:
                      std::vector<cv::KeyPoint>& keypoints,
                      cv::OutputArray descriptors);
 
+    int inline GetLevels(){
+        //return nlevels;}
+        return 1;}
+
+    float inline GetScaleFactor(){
+        //return scaleFactor;}
+        return 1;}
+
+    std::vector<float> inline GetScaleFactors(){
+        //return mvScaleFactor;
+        return std::vector<float>(8,1);
+    }
+
+    std::vector<float> inline GetInverseScaleFactors(){
+        //return mvInvScaleFactor;
+        return std::vector<float>(8,1);
+    }
+
+    std::vector<float> inline GetScaleSigmaSquares(){
+        //return mvLevelSigma2;
+        return std::vector<float>(8,1);
+    }
+
+    std::vector<float> inline GetInverseScaleSigmaSquares(){
+        //return mvInvLevelSigma2;
+        return std::vector<float>(8,1);
+    }
 protected:
 
     // USE OCTTREE HERE?

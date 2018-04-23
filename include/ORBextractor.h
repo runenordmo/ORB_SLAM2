@@ -61,25 +61,31 @@ public:
       cv::OutputArray descriptors);
 
     int inline GetLevels(){
-        return nlevels;}
+        //return nlevels;}
+        return 1;}
 
     float inline GetScaleFactor(){
-        return scaleFactor;}
+        //return scaleFactor;}
+        return 1;}
 
     std::vector<float> inline GetScaleFactors(){
-        return mvScaleFactor;
+        //return mvScaleFactor;
+        return std::vector<float>(8,1);
     }
 
     std::vector<float> inline GetInverseScaleFactors(){
-        return mvInvScaleFactor;
+        //return mvInvScaleFactor;
+        return std::vector<float>(8,1);
     }
 
     std::vector<float> inline GetScaleSigmaSquares(){
-        return mvLevelSigma2;
+        //return mvLevelSigma2;
+        return std::vector<float>(8,1);
     }
 
     std::vector<float> inline GetInverseScaleSigmaSquares(){
-        return mvInvLevelSigma2;
+        //return mvInvLevelSigma2;
+        return std::vector<float>(8,1);
     }
 
     std::vector<cv::Mat> mvImagePyramid;

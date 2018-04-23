@@ -138,6 +138,7 @@ protected:
      MapPoint* mpReplaced;
 
      // Scale invariance distances
+     // Todo: Determine a fixed value for CNN features
      float mfMinDistance;
      float mfMaxDistance;
 
