@@ -22,14 +22,20 @@
 #ifndef ORBVOCABULARY_H
 #define ORBVOCABULARY_H
 
-#include"Thirdparty/DBoW2/DBoW2/FORB.h"
+//#include"Thirdparty/DBoW2/DBoW2/FORB.h"
 #include"Thirdparty/DBoW2/DBoW2/TemplatedVocabulary.h"
+#include"Thirdparty/DBoW2/DBoW2/FSurf64.h"
 
 namespace ORB_SLAM2
 {
 
-typedef DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>
+typedef DBoW2::TemplatedVocabulary<DBoW2::FSurf64::TDescriptor, DBoW2::FSurf64>
   ORBVocabulary;
+
+//typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
+//  CNNVocabulary;
+//typedef DBoW2::TemplatedVocabulary<DBoW2::FSurf64::TDescriptor, DBoW2::FSurf64>
+//  SURFVocabulary;
 
 } //namespace ORB_SLAM
 

@@ -72,7 +72,7 @@ protected:
     std::mutex mMutex;
 
     // ADDED
-    SURFextractor mSurfExtract;
+    SURFextractor mSurfExtract = SURFextractor(1000,1,1);
     vector<cv::KeyPoint> mvCurrentKeysSURF;
     cv::Mat mCurrentDescsSURF;
 

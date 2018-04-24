@@ -20,7 +20,7 @@
 
 #include "KeyFrame.h"
 #include "Converter.h"
-#include "ORBmatcher.h"
+#include "SURFmatcher.h"
 #include<mutex>
 
 namespace ORB_SLAM2
@@ -60,7 +60,8 @@ void KeyFrame::ComputeBoW()
 {
     if(mBowVec.empty() || mFeatVec.empty())
     {
-        vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
+        // TODO: replace by template descriptor
+        std::vector<std::vector<float>> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
         // Feature vector associate features with nodes in the 4th level (from leaves up)
         // We assume the vocabulary tree has 6 levels, change the 4 otherwise
         mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);

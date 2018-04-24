@@ -23,14 +23,21 @@
 
 namespace ORB_SLAM2
 {
-
-std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
-{
-    std::vector<cv::Mat> vDesc;
+// TODO: replace by template
+std::vector<std::vector<float>> Converter::toDescriptorVector(const cv::Mat &Descriptors)
+{   
+    std::vector<std::vector<float>> vDesc;
     vDesc.reserve(Descriptors.rows);
     for (int j=0;j<Descriptors.rows;j++)
-        vDesc.push_back(Descriptors.row(j));
+    {
+        // Pointer to the i-th row
+        const float* p = Descriptors.ptr<float>(j);
 
+        // Copy data to a vector.  Note that (p + Descriptors.cols) points to the
+        // end of the row.
+        std::vector<float> vec(p, p + Descriptors.cols);
+        vDesc.push_back(vec);
+    }
     return vDesc;
 }
 

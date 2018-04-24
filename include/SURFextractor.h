@@ -2,13 +2,16 @@
 // Created by rune on 07.04.18.
 //
 
-#ifndef ORB_SLAM2_SURFEXTRACTOR_H
-#define ORB_SLAM2_SURFEXTRACTOR_H
+#ifndef SURFEXTRACTOR_H
+#define SURFEXTRACTOR_H
 
 #include <vector>
 #include <list>
 #include <opencv/cv.h>
-
+#include <opencv2/xfeatures2d.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/features2d.hpp>
 
 namespace ORB_SLAM2
 {
@@ -16,10 +19,7 @@ namespace ORB_SLAM2
 class SURFextractor {
 public:
 
-    //ORBextractor(int nfeatures, float scaleFactor, int nlevels,
-    //            int iniThFAST, int minThFAST);
-    // NOT SURE HOW TO HANDLE THE SCALE WITH THE SURF EXTRACTOR
-    SURFextractor();
+    SURFextractor(int nfeatures, float scaleFactor, int nlevels);
 
     ~SURFextractor(){}
 
@@ -30,37 +30,41 @@ public:
                      cv::OutputArray descriptors);
 
     int inline GetLevels(){
-        //return nlevels;}
-        return 1;}
+        return nlevels;}
 
     float inline GetScaleFactor(){
-        //return scaleFactor;}
-        return 1;}
+        return scaleFactor;}
 
     std::vector<float> inline GetScaleFactors(){
-        //return mvScaleFactor;
-        return std::vector<float>(8,1);
+        return mvScaleFactor;
     }
 
     std::vector<float> inline GetInverseScaleFactors(){
-        //return mvInvScaleFactor;
-        return std::vector<float>(8,1);
+        return mvInvScaleFactor;
     }
 
     std::vector<float> inline GetScaleSigmaSquares(){
-        //return mvLevelSigma2;
-        return std::vector<float>(8,1);
+        return mvLevelSigma2;
     }
 
     std::vector<float> inline GetInverseScaleSigmaSquares(){
-        //return mvInvLevelSigma2;
-        return std::vector<float>(8,1);
+        return mvInvLevelSigma2;
     }
+
+    std::vector<cv::Mat> mvImagePyramid;
+
 protected:
 
-    // USE OCTTREE HERE?
+    void ComputePyramid(cv::Mat image);
 
     int nfeatures;
+    double scaleFactor;
+    int nlevels;
+
+    std::vector<float> mvScaleFactor;
+    std::vector<float> mvInvScaleFactor;    
+    std::vector<float> mvLevelSigma2;
+    std::vector<float> mvInvLevelSigma2;
 
     cv::Ptr<cv::Feature2D> mSurfDetector;
 
@@ -73,4 +77,4 @@ protected:
 } //namespace ORB_SLAM
 
 
-#endif //ORB_SLAM2_SURFEXTRACTOR_H
+#endif //SURFEXTRACTOR_H

@@ -43,6 +43,8 @@ public:
     // Computes the Hamming distance between two ORB descriptors
     static int DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
 
+
+    static const int TH_LOW;
     // Search matches between Frame keypoints and projected MapPoints. Returns number of matches
     // Used to track the local map (Tracking)
     int SearchByProjection(Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3);
@@ -83,8 +85,6 @@ public:
     int Fuse(KeyFrame* pKF, cv::Mat Scw, const std::vector<MapPoint*> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint);
 
 public:
-
-    static const int TH_LOW;
     static const int TH_HIGH;
     static const int HISTO_LENGTH;
 

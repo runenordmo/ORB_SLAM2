@@ -20,7 +20,7 @@
 
 #include "Frame.h"
 #include "Converter.h"
-#include "ORBmatcher.h"
+#include "SURFmatcher.h"
 #include <thread>
 
 namespace ORB_SLAM2
@@ -37,7 +37,7 @@ Frame::Frame()
 
 //Copy Constructor
 Frame::Frame(const Frame &frame)
-    :mpORBvocabulary(frame.mpORBvocabulary), mpORBextractorLeft(frame.mpORBextractorLeft), mpORBextractorRight(frame.mpORBextractorRight),
+    :mpORBvocabulary(frame.mpORBvocabulary), mpSURFextractorLeft(frame.mpSURFextractorLeft), mpSURFextractorRight(frame.mpSURFextractorRight),
      mTimeStamp(frame.mTimeStamp), mK(frame.mK.clone()), mDistCoef(frame.mDistCoef.clone()),
      mbf(frame.mbf), mb(frame.mb), mThDepth(frame.mThDepth), N(frame.N), mvKeys(frame.mvKeys),
      mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn),  mvuRight(frame.mvuRight),
@@ -58,21 +58,21 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
-    :mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
+Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, SURFextractor* extractorLeft, SURFextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+    :mpORBvocabulary(voc),mpSURFextractorLeft(extractorLeft),mpSURFextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
      mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
     // Frame ID
     mnId=nNextId++;
 
     // Scale Level Info
-    mnScaleLevels = mpORBextractorLeft->GetLevels();
-    mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
+    mnScaleLevels = mpSURFextractorLeft->GetLevels();
+    mfScaleFactor = mpSURFextractorLeft->GetScaleFactor();
     mfLogScaleFactor = log(mfScaleFactor);
-    mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
-    mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
-    mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
-    mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
+    mvScaleFactors = mpSURFextractorLeft->GetScaleFactors();
+    mvInvScaleFactors = mpSURFextractorLeft->GetInverseScaleFactors();
+    mvLevelSigma2 = mpSURFextractorLeft->GetScaleSigmaSquares();
+    mvInvLevelSigma2 = mpSURFextractorLeft->GetInverseScaleSigmaSquares();
 
     // ORB extraction
     thread threadLeft(&Frame::ExtractORB,this,0,imLeft);
@@ -116,21 +116,21 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     AssignFeaturesToGrid();
 }
 
-Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
-    :mpORBvocabulary(voc),mpORBextractorLeft(extractor),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
+Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, SURFextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+    :mpORBvocabulary(voc),mpSURFextractorLeft(extractor),mpSURFextractorRight(static_cast<SURFextractor*>(NULL)),
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
     // Frame ID
     mnId=nNextId++;
 
     // Scale Level Info
-    mnScaleLevels = mpORBextractorLeft->GetLevels();
-    mfScaleFactor = mpORBextractorLeft->GetScaleFactor();    
+    mnScaleLevels = mpSURFextractorLeft->GetLevels();
+    mfScaleFactor = mpSURFextractorLeft->GetScaleFactor();    
     mfLogScaleFactor = log(mfScaleFactor);
-    mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
-    mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
-    mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
-    mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
+    mvScaleFactors = mpSURFextractorLeft->GetScaleFactors();
+    mvInvScaleFactors = mpSURFextractorLeft->GetInverseScaleFactors();
+    mvLevelSigma2 = mpSURFextractorLeft->GetScaleSigmaSquares();
+    mvInvLevelSigma2 = mpSURFextractorLeft->GetInverseScaleSigmaSquares();
 
     // ORB extraction
     ExtractORB(0,imGray);
@@ -171,21 +171,21 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 }
 
 
-Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
-    :mpORBvocabulary(voc),mpORBextractorLeft(extractor),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
+Frame::Frame(const cv::Mat &imGray, const double &timeStamp, SURFextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+    :mpORBvocabulary(voc),mpSURFextractorLeft(extractor),mpSURFextractorRight(static_cast<SURFextractor*>(NULL)),
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
     // Frame ID
     mnId=nNextId++;
 
     // Scale Level Info
-    mnScaleLevels = mpORBextractorLeft->GetLevels();
-    mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
+    mnScaleLevels = mpSURFextractorLeft->GetLevels();
+    mfScaleFactor = mpSURFextractorLeft->GetScaleFactor();
     mfLogScaleFactor = log(mfScaleFactor);
-    mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
-    mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
-    mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
-    mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
+    mvScaleFactors = mpSURFextractorLeft->GetScaleFactors();
+    mvInvScaleFactors = mpSURFextractorLeft->GetInverseScaleFactors();
+    mvLevelSigma2 = mpSURFextractorLeft->GetScaleSigmaSquares();
+    mvInvLevelSigma2 = mpSURFextractorLeft->GetInverseScaleSigmaSquares();
 
     // ORB extraction
     ExtractORB(0,imGray);
@@ -247,9 +247,9 @@ void Frame::AssignFeaturesToGrid()
 void Frame::ExtractORB(int flag, const cv::Mat &im)
 {
     if(flag==0)
-        (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
+        (*mpSURFextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
     else
-        (*mpORBextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight);
+        (*mpSURFextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight);
 }
 
 void Frame::SetPose(cv::Mat Tcw)
@@ -396,7 +396,8 @@ void Frame::ComputeBoW()
 {
     if(mBowVec.empty())
     {
-        vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
+        // TODO: Replace by template
+        vector<std::vector<float>> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
         mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
     }
 }
@@ -468,9 +469,9 @@ void Frame::ComputeStereoMatches()
     mvuRight = vector<float>(N,-1.0f);
     mvDepth = vector<float>(N,-1.0f);
 
-    const int thOrbDist = (ORBmatcher::TH_HIGH+ORBmatcher::TH_LOW)/2;
+    const int thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
 
-    const int nRows = mpORBextractorLeft->mvImagePyramid[0].rows;
+    const int nRows = mpSURFextractorLeft->mvImagePyramid[0].rows;
 
     //Assign keypoints to row table
     vector<vector<size_t> > vRowIndices(nRows,vector<size_t>());
@@ -519,7 +520,7 @@ void Frame::ComputeStereoMatches()
         if(maxU<0)
             continue;
 
-        int bestDist = ORBmatcher::TH_HIGH;
+        int bestDist = SURFmatcher::TH_HIGH;
         size_t bestIdxR = 0;
 
         const cv::Mat &dL = mDescriptors.row(iL);
@@ -538,7 +539,7 @@ void Frame::ComputeStereoMatches()
             if(uR>=minU && uR<=maxU)
             {
                 const cv::Mat &dR = mDescriptorsRight.row(iR);
-                const int dist = ORBmatcher::DescriptorDistance(dL,dR);
+                const int dist = SURFmatcher::DescriptorDistance(dL,dR);
 
                 if(dist<bestDist)
                 {
@@ -560,7 +561,7 @@ void Frame::ComputeStereoMatches()
 
             // sliding window search
             const int w = 5;
-            cv::Mat IL = mpORBextractorLeft->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
+            cv::Mat IL = mpSURFextractorLeft->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
             IL.convertTo(IL,CV_32F);
             IL = IL - IL.at<float>(w,w) *cv::Mat::ones(IL.rows,IL.cols,CV_32F);
 
@@ -572,12 +573,12 @@ void Frame::ComputeStereoMatches()
 
             const float iniu = scaleduR0+L-w;
             const float endu = scaleduR0+L+w+1;
-            if(iniu<0 || endu >= mpORBextractorRight->mvImagePyramid[kpL.octave].cols)
+            if(iniu<0 || endu >= mpSURFextractorRight->mvImagePyramid[kpL.octave].cols)
                 continue;
 
             for(int incR=-L; incR<=+L; incR++)
             {
-                cv::Mat IR = mpORBextractorRight->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
+                cv::Mat IR = mpSURFextractorRight->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
                 IR.convertTo(IR,CV_32F);
                 IR = IR - IR.at<float>(w,w) *cv::Mat::ones(IR.rows,IR.cols,CV_32F);
 

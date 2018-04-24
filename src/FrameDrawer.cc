@@ -50,7 +50,7 @@ cv::Mat FrameDrawer::DrawFrame()
     int state; // Tracking state
 
     //ADDED
-    SURFextractor surfExtract;
+    SURFextractor surfExtract(1000,1,1);
     vector<cv::KeyPoint> currentKeysSURF;
     cv::Mat currentDescsSURF;
     //END ADDED

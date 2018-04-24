@@ -24,7 +24,7 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
-#include"ORBmatcher.h"
+#include"SURFmatcher.h"
 #include"FrameDrawer.h"
 #include"Converter.h"
 #include"Map.h"
@@ -110,19 +110,19 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     // Load ORB parameters
 
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nLevels = fSettings["ORBextractor.nLevels"];
+    int nFeatures = 1000;//fSettings["ORBextractor.nFeatures"];
+    float fScaleFactor = 1;//fSettings["ORBextractor.scaleFactor"];
+    int nLevels = 1;//fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+    mpSURFextractorLeft = new SURFextractor(nFeatures,fScaleFactor,nLevels);
 
     if(sensor==System::STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+        mpSURFextractorRight = new SURFextractor(nFeatures,fScaleFactor,nLevels);
 
     if(sensor==System::MONOCULAR)
-        mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+        mpIniSURFextractor = new SURFextractor(2*nFeatures,fScaleFactor,nLevels);
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
@@ -196,7 +196,7 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
         }
     }
 
-    mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+    mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpSURFextractorLeft,mpSURFextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
 
@@ -227,7 +227,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
         imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
 
-    mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+    mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpSURFextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
 
@@ -255,9 +255,9 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
     }
 
     if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
-        mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        mCurrentFrame = Frame(mImGray,timestamp,mpIniSURFextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
     else
-        mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        mCurrentFrame = Frame(mImGray,timestamp,mpSURFextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
 
@@ -596,7 +596,7 @@ void Tracking::MonocularInitialization()
         }
 
         // Find correspondences
-        ORBmatcher matcher(0.9,false);
+        SURFmatcher matcher(0.9,false);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
         // Check if there are enough correspondences
@@ -761,7 +761,7 @@ bool Tracking::TrackReferenceKeyFrame()
 
     // We perform first an ORB matching with the reference keyframe
     // If enough matches are found we setup a PnP solver
-    ORBmatcher matcher(0.7,false);
+    SURFmatcher matcher(0.7,false);
     vector<MapPoint*> vpMapPointMatches;
 
     int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);
@@ -866,7 +866,7 @@ void Tracking::UpdateLastFrame()
 
 bool Tracking::TrackWithMotionModel()
 {
-    ORBmatcher matcher(0.9,true);
+    SURFmatcher matcher(0.9,false);
 
     // Update last frame pose according to its reference keyframe
     // Create "visual odometry" points if in Localization Mode
@@ -1181,7 +1181,7 @@ void Tracking::SearchLocalPoints()
 
     if(nToMatch>0)
     {
-        ORBmatcher matcher(0.8);
+        SURFmatcher matcher(0.8,false);
         int th = 1;
         if(mSensor==System::RGBD)
             th=3;
@@ -1354,7 +1354,7 @@ bool Tracking::Relocalization()
 
     // We perform first an ORB matching with each candidate
     // If enough matches are found we setup a PnP solver
-    ORBmatcher matcher(0.75,true);
+    SURFmatcher matcher(0.75,false);
 
     vector<PnPsolver*> vpPnPsolvers;
     vpPnPsolvers.resize(nKFs);
@@ -1393,7 +1393,7 @@ bool Tracking::Relocalization()
     // Alternatively perform some iterations of P4P RANSAC
     // Until we found a camera pose supported by enough inliers
     bool bMatch = false;
-    ORBmatcher matcher2(0.9,true);
+    SURFmatcher matcher2(0.9,true);
 
     while(nCandidates>0 && !bMatch)
     {
