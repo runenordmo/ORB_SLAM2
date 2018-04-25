@@ -21,9 +21,9 @@ public:
     SURFmatcher(float nnratio=0.6, bool checkOri=false);
 
     // Computes the euclidean distance between two SURF descriptors
-    static int DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
+    static double DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
 
-    static const int TH_LOW;
+    static const double TH_LOW;
     // Search matches between Frame keypoints and projected MapPoints. Returns number of matches
     // Used to track the local map (Tracking)
     int SearchByProjection(Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3);
@@ -34,7 +34,7 @@ public:
 
     // Project MapPoints seen in KeyFrame into the Frame and search matches.
     // Used in relocalisation (Tracking)
-    int SearchByProjection(Frame &CurrentFrame, KeyFrame* pKF, const std::set<MapPoint*> &sAlreadyFound, const float th, const int ORBdist);
+    int SearchByProjection(Frame &CurrentFrame, KeyFrame* pKF, const std::set<MapPoint*> &sAlreadyFound, const float th, const double ORBdist);
 
     // Project MapPoints using a Similarity Transformation and search matches.
     // Used in loop detection (Loop Closing)
@@ -64,7 +64,7 @@ public:
     int Fuse(KeyFrame* pKF, cv::Mat Scw, const std::vector<MapPoint*> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint);
 
 public:
-    static const int TH_HIGH;
+    static const double TH_HIGH;
     static const int HISTO_LENGTH;
 
 

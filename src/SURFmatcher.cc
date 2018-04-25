@@ -21,9 +21,12 @@ using namespace std;
 
 namespace ORB_SLAM2
 {
-
-const int SURFmatcher::TH_HIGH = 100;
-const int SURFmatcher::TH_LOW = 50;
+// TODO: Set thresholds    
+// Min and max threshold for distance between two features
+    //sometime used as:
+    //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
+const double SURFmatcher::TH_HIGH = 100;
+const double SURFmatcher::TH_LOW = 10;
 const int SURFmatcher::HISTO_LENGTH = 30;
 
 SURFmatcher::SURFmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
@@ -58,12 +61,12 @@ int SURFmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoin
 
         if(vIndices.empty())
             continue;
-
+        
         const cv::Mat MPdescriptor = pMP->GetDescriptor();
 
-        int bestDist=256;
+        double bestDist=DBL_MAX;
         int bestLevel= -1;
-        int bestDist2=256;
+        double bestDist2=DBL_MAX;
         int bestLevel2 = -1;
         int bestIdx =-1 ;
 
@@ -82,10 +85,10 @@ int SURFmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoin
                 if(er>r*F.mvScaleFactors[nPredictedLevel])
                     continue;
             }
-
+            
             const cv::Mat &d = F.mDescriptors.row(idx);
 
-            const int dist = DescriptorDistance(MPdescriptor,d);
+            const double dist = DescriptorDistance(MPdescriptor,d);
 
             if(dist<bestDist)
             {
@@ -183,12 +186,12 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
 
                 if(pMP->isBad())
                     continue;                
-
+                
                 const cv::Mat &dKF= pKF->mDescriptors.row(realIdxKF);
 
-                int bestDist1=256;
+                double bestDist1=DBL_MAX;
                 int bestIdxF =-1 ;
-                int bestDist2=256;
+                double bestDist2=DBL_MAX;
 
                 for(size_t iF=0; iF<vIndicesF.size(); iF++)
                 {
@@ -199,7 +202,7 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
 
                     const cv::Mat &dF = F.mDescriptors.row(realIdxF);
 
-                    const int dist =  DescriptorDistance(dKF,dF);
+                    const double dist =  DescriptorDistance(dKF,dF);
 
                     if(dist<bestDist1)
                     {
@@ -355,7 +358,7 @@ int SURFmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<Map
         // Match to the most similar keypoint in the radius
         const cv::Mat dMP = pMP->GetDescriptor();
 
-        int bestDist = 256;
+        double bestDist = DBL_MAX;
         int bestIdx = -1;
         for(vector<size_t>::const_iterator vit=vIndices.begin(), vend=vIndices.end(); vit!=vend; vit++)
         {
@@ -370,7 +373,7 @@ int SURFmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<Map
 
             const cv::Mat &dKF = pKF->mDescriptors.row(idx);
 
-            const int dist = DescriptorDistance(dMP,dKF);
+            const double dist = DescriptorDistance(dMP,dKF);
 
             if(dist<bestDist)
             {
@@ -400,7 +403,7 @@ int SURFmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2
         rotHist[i].reserve(500);
     const float factor = 1.0f/HISTO_LENGTH;
 
-    vector<int> vMatchedDistance(F2.mvKeysUn.size(),INT_MAX);
+    vector<double> vMatchedDistance(F2.mvKeysUn.size(),DBL_MAX);
     vector<int> vnMatches21(F2.mvKeysUn.size(),-1);
 
     for(size_t i1=0, iend1=F1.mvKeysUn.size(); i1<iend1; i1++)
@@ -417,8 +420,8 @@ int SURFmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2
 
         cv::Mat d1 = F1.mDescriptors.row(i1);
 
-        int bestDist = INT_MAX;
-        int bestDist2 = INT_MAX;
+        double bestDist = DBL_MAX;
+        double bestDist2 = DBL_MAX;
         int bestIdx2 = -1;
 
         for(vector<size_t>::iterator vit=vIndices2.begin(); vit!=vIndices2.end(); vit++)
@@ -427,7 +430,7 @@ int SURFmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2
 
             cv::Mat d2 = F2.mDescriptors.row(i2);
 
-            int dist = DescriptorDistance(d1,d2);
+            double dist = DescriptorDistance(d1,d2);
 
             if(vMatchedDistance[i2]<=dist)
                 continue;
@@ -551,9 +554,9 @@ int SURFmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> 
 
                 const cv::Mat &d1 = Descriptors1.row(idx1);
 
-                int bestDist1=256;
+                double bestDist1=DBL_MAX;
                 int bestIdx2 =-1 ;
-                int bestDist2=256;
+                double bestDist2=DBL_MAX;
 
                 for(size_t i2=0, iend2=f2it->second.size(); i2<iend2; i2++)
                 {
@@ -569,7 +572,7 @@ int SURFmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> 
 
                     const cv::Mat &d2 = Descriptors2.row(idx2);
 
-                    int dist = DescriptorDistance(d1,d2);
+                    double dist = DescriptorDistance(d1,d2);
 
                     if(dist<bestDist1)
                     {
@@ -700,7 +703,7 @@ int SURFmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat 
                 
                 const cv::Mat &d1 = pKF1->mDescriptors.row(idx1);
                 
-                int bestDist = TH_LOW;
+                double bestDist = TH_LOW;
                 int bestIdx2 = -1;
                 
                 for(size_t i2=0, iend2=f2it->second.size(); i2<iend2; i2++)
@@ -721,7 +724,7 @@ int SURFmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat 
                     
                     const cv::Mat &d2 = pKF2->mDescriptors.row(idx2);
                     
-                    const int dist = DescriptorDistance(d1,d2);
+                    const double dist = DescriptorDistance(d1,d2);
                     
                     if(dist>TH_LOW || dist>bestDist)
                         continue;
@@ -886,7 +889,7 @@ int SURFmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, cons
 
         const cv::Mat dMP = pMP->GetDescriptor();
 
-        int bestDist = 256;
+        double bestDist = DBL_MAX;
         int bestIdx = -1;
         for(vector<size_t>::const_iterator vit=vIndices.begin(), vend=vIndices.end(); vit!=vend; vit++)
         {
@@ -927,7 +930,7 @@ int SURFmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, cons
 
             const cv::Mat &dKF = pKF->mDescriptors.row(idx);
 
-            const int dist = DescriptorDistance(dMP,dKF);
+            const double dist = DescriptorDistance(dMP,dKF);
 
             if(dist<bestDist)
             {
@@ -1045,7 +1048,7 @@ int SURFmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPo
 
         const cv::Mat dMP = pMP->GetDescriptor();
 
-        int bestDist = INT_MAX;
+        double bestDist = DBL_MAX;
         int bestIdx = -1;
         for(vector<size_t>::const_iterator vit=vIndices.begin(); vit!=vIndices.end(); vit++)
         {
@@ -1057,7 +1060,7 @@ int SURFmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPo
 
             const cv::Mat &dKF = pKF->mDescriptors.row(idx);
 
-            int dist = DescriptorDistance(dMP,dKF);
+            double dist = DescriptorDistance(dMP,dKF);
 
             if(dist<bestDist)
             {
@@ -1184,7 +1187,7 @@ int SURFmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> 
         // Match to the most similar keypoint in the radius
         const cv::Mat dMP = pMP->GetDescriptor();
 
-        int bestDist = INT_MAX;
+        double bestDist = DBL_MAX;
         int bestIdx = -1;
         for(vector<size_t>::const_iterator vit=vIndices.begin(), vend=vIndices.end(); vit!=vend; vit++)
         {
@@ -1197,7 +1200,7 @@ int SURFmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> 
 
             const cv::Mat &dKF = pKF2->mDescriptors.row(idx);
 
-            const int dist = DescriptorDistance(dMP,dKF);
+            const double dist = DescriptorDistance(dMP,dKF);
 
             if(dist<bestDist)
             {
@@ -1264,7 +1267,7 @@ int SURFmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> 
         // Match to the most similar keypoint in the radius
         const cv::Mat dMP = pMP->GetDescriptor();
 
-        int bestDist = INT_MAX;
+        double bestDist = DBL_MAX;
         int bestIdx = -1;
         for(vector<size_t>::const_iterator vit=vIndices.begin(), vend=vIndices.end(); vit!=vend; vit++)
         {
@@ -1277,7 +1280,7 @@ int SURFmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> 
 
             const cv::Mat &dKF = pKF1->mDescriptors.row(idx);
 
-            const int dist = DescriptorDistance(dMP,dKF);
+            const double dist = DescriptorDistance(dMP,dKF);
 
             if(dist<bestDist)
             {
@@ -1382,7 +1385,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame,
 
                 const cv::Mat dMP = pMP->GetDescriptor();
 
-                int bestDist = 256;
+                double bestDist = DBL_MAX;
                 int bestIdx2 = -1;
 
                 for(vector<size_t>::const_iterator vit=vIndices2.begin(), vend=vIndices2.end(); vit!=vend; vit++)
@@ -1402,7 +1405,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame,
 
                     const cv::Mat &d = CurrentFrame.mDescriptors.row(i2);
 
-                    const int dist = DescriptorDistance(dMP,d);
+                    const double dist = DescriptorDistance(dMP,d);
 
                     if(dist<bestDist)
                     {
@@ -1457,7 +1460,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame,
     return nmatches;
 }
 
-int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const int ORBdist)
+int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const double SURFdist)
 {
     int nmatches = 0;
 
@@ -1520,7 +1523,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const se
 
                 const cv::Mat dMP = pMP->GetDescriptor();
 
-                int bestDist = 256;
+                double bestDist = DBL_MAX;
                 int bestIdx2 = -1;
 
                 for(vector<size_t>::const_iterator vit=vIndices2.begin(); vit!=vIndices2.end(); vit++)
@@ -1531,7 +1534,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const se
 
                     const cv::Mat &d = CurrentFrame.mDescriptors.row(i2);
 
-                    const int dist = DescriptorDistance(dMP,d);
+                    const double dist = DescriptorDistance(dMP,d);
 
                     if(dist<bestDist)
                     {
@@ -1540,7 +1543,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const se
                     }
                 }
 
-                if(bestDist<=ORBdist)
+                if(bestDist<=SURFdist)
                 {
                     CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
                     nmatches++;
@@ -1633,7 +1636,7 @@ void SURFmatcher::ComputeThreeMaxima(vector<int>* histo, const int L, int &ind1,
 // Bit set count operation from
 // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
 
-int SURFmatcher::DescriptorDistance(const cv::Mat &a, const cv::Mat &b) {
+double SURFmatcher::DescriptorDistance(const cv::Mat &a, const cv::Mat &b) {
     return cv::norm(a,b,cv::NORM_L2);
 }
 

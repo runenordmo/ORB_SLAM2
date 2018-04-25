@@ -1448,7 +1448,7 @@ bool Tracking::Relocalization()
 
                 // If few inliers, search by projection in a coarse window and optimize again
                 if(nGood<50)
-                {
+                {   // TODO: adjust last argument, it is a distance threshold 
                     int nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,10,100);
 
                     if(nadditional+nGood>=50)
@@ -1463,6 +1463,7 @@ bool Tracking::Relocalization()
                             for(int ip =0; ip<mCurrentFrame.N; ip++)
                                 if(mCurrentFrame.mvpMapPoints[ip])
                                     sFound.insert(mCurrentFrame.mvpMapPoints[ip]);
+                                // TODO: adjust last argument, it is a distance threshold 
                             nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,3,64);
 
                             // Final optimization

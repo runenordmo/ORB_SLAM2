@@ -48,7 +48,7 @@ SURFextractor::SURFextractor(int _nfeatures, float _scaleFactor, int _nlevels):
 
     mvImagePyramid.resize(nlevels);
 
-    double hessian = 1000.0;
+    double hessian = 800.0;
     mSurfDetector = xfeatures2d::SURF::create(hessian);
 }
 

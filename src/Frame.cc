@@ -469,7 +469,7 @@ void Frame::ComputeStereoMatches()
     mvuRight = vector<float>(N,-1.0f);
     mvDepth = vector<float>(N,-1.0f);
 
-    const int thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
+    const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
 
     const int nRows = mpSURFextractorLeft->mvImagePyramid[0].rows;
 
@@ -520,7 +520,7 @@ void Frame::ComputeStereoMatches()
         if(maxU<0)
             continue;
 
-        int bestDist = SURFmatcher::TH_HIGH;
+        double bestDist = SURFmatcher::TH_HIGH;
         size_t bestIdxR = 0;
 
         const cv::Mat &dL = mDescriptors.row(iL);
@@ -539,7 +539,7 @@ void Frame::ComputeStereoMatches()
             if(uR>=minU && uR<=maxU)
             {
                 const cv::Mat &dR = mDescriptorsRight.row(iR);
-                const int dist = SURFmatcher::DescriptorDistance(dL,dR);
+                const double dist = SURFmatcher::DescriptorDistance(dL,dR);
 
                 if(dist<bestDist)
                 {
@@ -565,10 +565,10 @@ void Frame::ComputeStereoMatches()
             IL.convertTo(IL,CV_32F);
             IL = IL - IL.at<float>(w,w) *cv::Mat::ones(IL.rows,IL.cols,CV_32F);
 
-            int bestDist = INT_MAX;
+            double bestDist = DBL_MAX;
             int bestincR = 0;
             const int L = 5;
-            vector<float> vDists;
+            vector<double> vDists;
             vDists.resize(2*L+1);
 
             const float iniu = scaleduR0+L-w;
