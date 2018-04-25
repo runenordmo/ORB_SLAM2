@@ -21,8 +21,8 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-const int PATCH_SIZE = 31;
-const int HALF_PATCH_SIZE = 15;
+//const int PATCH_SIZE = 31;
+//const int HALF_PATCH_SIZE = 15;
 const int EDGE_THRESHOLD = 19;
 
 SURFextractor::SURFextractor(int _nfeatures, float _scaleFactor, int _nlevels):
