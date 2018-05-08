@@ -16,6 +16,7 @@ CNN_SCALE = CNN_INP_SZ / CNN_FM_SZ
 class Image:
     def __init__(self, path):
         img = image.load_img(path)
+        self.size = img.size
         self.width = img.width
         self.height = img.height
         self._orig = img
