@@ -69,7 +69,8 @@ src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
 src/SURFextractor.cc
-src/SURFmatcher.cc )
+src/SURFmatcher.cc 
+src/CNNextractor.cc)
 
 if(APPLE)
    target_link_libraries(${PROJECT_NAME}
