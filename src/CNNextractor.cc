@@ -44,7 +44,8 @@ CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels,
 	mvImagePyramid.resize(nlevels);
 }
 
-void CNNextractor::operator()(cv::InputArray _image, cv::InputArray _mask,
+//CNN specific
+void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputArray _mask,
 	std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors){
 
 	if (_image.empty())
@@ -64,41 +65,49 @@ void CNNextractor::operator()(cv::InputArray _image, cv::InputArray _mask,
 	if (!f) { //couldn't open the file
 		return;
 	}
-
-	std::vector<cv::KeyPoint> keypoints;
-	cv::Mat descriptors;
+	
+	// Keep track of frame number, keypoints and descriptors
+	int currFrameNumber = 0;
+	//f.seekg(0);
 
 	while (!f.eof()) {
-		std::array<float, 512> desc;
-		cv::KeyPoint keyP(0, 0, 1, -1, 0, 0, -1);
-		f.seekg(mFileInputPosition);
+
+		std::array<float, 512> desc; //single descriptor
+		cv::KeyPoint keyP(0, 0, 1, -1, 0, 0, -1); //single keypoint
+
 		cv::Point pt;
 		f.read(reinterpret_cast<char*>(&pt.x), sizeof(std::int32_t));
 		f.read(reinterpret_cast<char*>(&pt.y), sizeof(std::int32_t));
-		keyP.pt = pt;
 
-		bool last_feature_in_frame = keyP.pt.x == -1 || keyP.pt.y == -1;
-		if (last_feature_in_frame) {
-			mFileInputPosition += 2 * sizeof(std::int32_t);
-			if (f) { //returning the features
-				_descriptors = descriptors;
-				_keypoints = keypoints;
-				return;
+		if (!f) { _keypoints.clear(); _descriptors = cv::Mat(); f.close(); return; }
+		else {
+			bool last_feature_in_frame = (pt.x == -1 && pt.y == -1);
+			if (!last_feature_in_frame) {
+				//read descriptor
+				f.read(reinterpret_cast<char *>(&desc), sizeof(desc));
+				if (!f) { _keypoints.clear();  _descriptors = cv::Mat(); f.close(); return; }
+				else { //reading went well, save keypoint and descriptor
+					if (currFrameNumber == frameNumber) { //ready to return the features!
+						keyP.pt = pt;
+						_keypoints.push_back(keyP);
+						_descriptors.push_back(cv::Mat(desc, true).reshape(1, 1));
+					}
+				}
 			}
-			else { //something went wrong while reading the file
-				return;
+			else { //last feature in frame
+				if (currFrameNumber == frameNumber) { //ready to return the features!
+					f.close(); return;
+				}
+				else {
+					currFrameNumber++;
+				}
 			}
-		}
-
-		f.read(reinterpret_cast<char *>(&desc), sizeof(desc));
-		// Add read keypoints and corresponding descriptors
-		keypoints.push_back(keyP);
-		descriptors.push_back(cv::Mat(desc, true).reshape(1, 1));
-		mFileInputPosition += 2 * sizeof(std::int32_t) + sizeof(desc);
+		}	
 	}
-
 	//reached EOF
+	_keypoints.clear();  _descriptors = cv::Mat(); f.close(); return;
 }
+
 
 void CNNextractor::ComputePyramid(cv::Mat image)
 {

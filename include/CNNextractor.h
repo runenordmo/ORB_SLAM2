@@ -15,6 +15,7 @@ namespace ORB_SLAM2
 	class CNNextractor {
 	public:
 
+		//CNN specific
 		CNNextractor(int nfeatures, float scaleFactor, int nlevels, 
 			std::string filename);
 
@@ -22,9 +23,9 @@ namespace ORB_SLAM2
 
 		// Compute the CNN features and descriptors on an image.
 		// Mask is ignored in the current implementation.
-		void operator()(cv::InputArray image, cv::InputArray mask,
-			std::vector<cv::KeyPoint>& keypoints,
-			cv::Mat& descriptors);
+		//CNN specific
+		void operator()(cv::InputArray _image, int frameNumber, cv::InputArray _mask,
+			std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors);
 
 		int inline GetLevels() {
 			return nlevels;
@@ -67,7 +68,6 @@ namespace ORB_SLAM2
 
 		//CNN specific
 		std::string mFilename;
-		int mFileInputPosition;
 	};
 
 } //namespace ORB_SLAM
