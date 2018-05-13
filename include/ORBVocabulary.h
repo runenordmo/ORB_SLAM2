@@ -24,12 +24,12 @@
 
 //#include"Thirdparty/DBoW2/DBoW2/FORB.h"
 #include"Thirdparty/DBoW2/DBoW2/TemplatedVocabulary.h"
-#include"Thirdparty/DBoW2/DBoW2/FSurf64.h"
+#include"Thirdparty/DBoW2/DBoW2/FCNN.h"
 
 namespace ORB_SLAM2
 {
 
-typedef DBoW2::TemplatedVocabulary<DBoW2::FSurf64::TDescriptor, DBoW2::FSurf64>
+typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
   ORBVocabulary;
 
 //typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>

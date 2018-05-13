@@ -11,13 +11,13 @@ set(HDRS_DBOW2
   DBoW2/FeatureVector.h
   DBoW2/ScoringObject.h   
   DBoW2/TemplatedVocabulary.h
-  DBoW2/FSurf64.h)
+  DBoW2/FCNN.h)
 set(SRCS_DBOW2
   DBoW2/BowVector.cpp
   DBoW2/FORB.cpp      
   DBoW2/FeatureVector.cpp
   DBoW2/ScoringObject.cpp
-  DBoW2/FSurf64.cpp)
+  DBoW2/FCNN.cpp)
 
 set(HDRS_DUTILS
   DUtils/Random.h
