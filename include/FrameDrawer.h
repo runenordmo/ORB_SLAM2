@@ -71,11 +71,6 @@ protected:
 
     std::mutex mMutex;
 
-    // ADDED
-    CNNextractor mSurfExtract = CNNextractor(1000,1,1);
-    vector<cv::KeyPoint> mvCurrentKeysSURF;
-    cv::Mat mCurrentDescsSURF;
-
 };
 
 } //namespace ORB_SLAM

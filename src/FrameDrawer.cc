@@ -49,12 +49,6 @@ cv::Mat FrameDrawer::DrawFrame()
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
 
-    //ADDED
-    CNNextractor surfExtract(1000,1,1);
-    vector<cv::KeyPoint> currentKeysSURF;
-    cv::Mat currentDescsSURF;
-    //END ADDED
-
     //Copy variables within scoped mutex
     {
         unique_lock<mutex> lock(mMutex);
@@ -76,8 +70,6 @@ cv::Mat FrameDrawer::DrawFrame()
             vbVO = mvbVO;
             vbMap = mvbMap;
 
-            //ADDED
-            surfExtract = mSurfExtract;
         }
         else if(mState==Tracking::LOST)
         {
@@ -106,16 +98,6 @@ cv::Mat FrameDrawer::DrawFrame()
         mnTrackedVO=0;
         const float r = 5;
         const int n = vCurrentKeys.size();
-
-        //ADDED
-        bool bPlotSurfFeaturesOnFrame = false;
-        if (bPlotSurfFeaturesOnFrame){
-            surfExtract(im, cv::Mat(), currentKeysSURF, currentDescsSURF);
-            for (int j = 0; j < 300; ++j) {
-                cv::circle(im,currentKeysSURF[j].pt,2,cv::Scalar(255,0,0),-1);
-            }
-        }
-        //END ADDED
 
         for(int i=0;i<n;i++)
         {
