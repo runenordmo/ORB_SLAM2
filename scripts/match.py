@@ -67,7 +67,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--image", help="path to image (in sequence)")
 parser.add_argument("-o", "--output", help="path to store output file", default="output/")
 parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=1000)
-parser.add_argument("-b", "--border", help="width of insensitive border where features are ignored", type=int, default=16)
 parser.add_argument("-l", "--lines", help="suppress drawing match lines", action="store_false")
 args = parser.parse_args()
 
@@ -75,7 +74,7 @@ assert args.output.endswith('/'), "output must end with '/'"
 assert args.image != None, "image is mandatory"
 
 
-detector = FeatureDetector(args.threshold, args.border)
+detector = FeatureDetector(args.threshold)
 
 img1, img2 = get_image_pair(args.image)
 

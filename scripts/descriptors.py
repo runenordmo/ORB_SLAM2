@@ -41,7 +41,6 @@ parser.add_argument("-o", "--output", help="path to store output files", default
 parser.add_argument("-f", "--file", help="name of descriptors file", default="descriptors.dat")
 parser.add_argument("-e", "--ext", help="extension of the image files", default=".png")
 parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=1000)
-parser.add_argument("-b", "--border", help="width of insensitive border where features are ignored", type=int, default=16)
 parser.add_argument("-d", "--debug", help="saves a debug image", action="store_true")
 args = parser.parse_args()
 
@@ -50,7 +49,7 @@ assert args.output.endswith('/'), "output must end with '/'"
 assert args.ext.startswith('.'), "ext must start with '.'"
 
 
-detector = FeatureDetector(args.threshold, args.border)
+detector = FeatureDetector(args.threshold)
 
 images = get_images(args.path, args.ext)
 file = open(args.output + args.file, 'wb')

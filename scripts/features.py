@@ -45,7 +45,7 @@ class Image:
         draw = ImageDraw.Draw(copy)
         for desc in descriptors:
             x,y = desc.kp
-            draw.rectangle((x-4,y-4,x+4,y+4), outline=desc.color())
+            draw.ellipse((x-2,y-2,x+2,y+2), outline=desc.color())
 
         return copy
 
@@ -69,10 +69,29 @@ class KpDesc:
         return (r,g,b)
 
 
+def refine_max(x, y, fm):
+    assert fm.shape == (CNN_FM_SZ, CNN_FM_SZ), "Unexpected feature maps shape"
+    assert 0 < x < CNN_FM_SZ-1, "x is out of range"
+    assert 0 < y < CNN_FM_SZ-1, "y is out of range"
+
+    Dx = 0.5 * (fm[y,x+1] - fm[y,x-1])
+    Dy = 0.5 * (fm[y+1,x] - fm[y-1,x])
+
+    Dxx = fm[y,x+1] + fm[y,x-1] - 2*fm[y,x]
+    Dyy = fm[y+1,x] + fm[y+1,x] - 2*fm[y,x]
+    Dxy = 0.25 * (fm[y+1,x+1] + fm[y-1,x-1] - fm[y+1,x-1] - fm[y-1,x+1])
+
+    A = np.array([[Dxx, Dxy], [Dxy, Dyy]])
+    b = np.transpose(np.array([-Dx, -Dy]))
+    rmax,_,_,_ = np.linalg.lstsq(A,b,rcond=None)
+
+    rmax = np.clip(rmax, -1, 1)
+    return x+rmax[0], y+rmax[1]
+
+
 class FeatureDetector:
-    def __init__(self, threshold, border):
+    def __init__(self, threshold):
         self._threshold = threshold
-        self._border = border
         base = VGG16(weights='imagenet')
         self._model = Model(inputs=base.input, outputs=base.get_layer('block4_conv3').output)
 
@@ -89,13 +108,17 @@ class FeatureDetector:
     def find_keypoints(self, featuremaps):
         assert featuremaps.shape == (CNN_FM_SZ, CNN_FM_SZ, CNN_FM_CNT), "Unexpected feature maps shape"
 
+        sense_fms = featuremaps[1:-1,1:-1,:]
         keypoints = []
-        for i,fm in enumerate(np.rollaxis(featuremaps,2)):
+        seen = set()
+        for i,fm in enumerate(np.rollaxis(sense_fms,2)):
             max = np.unravel_index(np.argmax(fm, axis=None), fm.shape)
-            if fm[max] > self._threshold:
-                x = max[1]
-                y = max[0]
-                keypoints.append((x,y,i))
+            x = max[1]+1
+            y = max[0]+1
+            if (x,y) not in seen:
+                if fm[max] > self._threshold:
+                    seen.add((x,y))
+                    keypoints.append((x,y,i))
 
         return keypoints
 
@@ -106,12 +129,12 @@ class FeatureDetector:
 
             keypoints = self.find_keypoints(featuremaps)
             for x_kp,y_kp,fm in keypoints:
-                x = int(x_img + x_kp*CNN_SCALE + CNN_SCALE/2)
-                y = int(y_img + y_kp*CNN_SCALE + CNN_SCALE/2)
+                x,y = refine_max(x_kp, y_kp, featuremaps[:,:,fm])
+                x = int(x_img + x*CNN_SCALE + CNN_SCALE/2)
+                y = int(y_img + y*CNN_SCALE + CNN_SCALE/2)
                 assert x < x_img + CNN_INP_SZ, "x is out of range"
                 assert y < y_img + CNN_INP_SZ, "y is out of range"
-                border = self._border
-                if border < x < img.width-border and border < y < img.height:
+                if 0 <= x < img.width and 0 <= y < img.height:
                     desc = featuremaps[y_kp,x_kp,:]
                     descriptors.append(KpDesc((x,y),desc,fm))
 
