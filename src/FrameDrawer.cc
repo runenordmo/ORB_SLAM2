@@ -28,7 +28,7 @@
 
 
 // ADDED
-#include "SURFextractor.h"
+#include "CNNextractor.h"
 // END ADDED
 
 namespace ORB_SLAM2
@@ -50,7 +50,7 @@ cv::Mat FrameDrawer::DrawFrame()
     int state; // Tracking state
 
     //ADDED
-    SURFextractor surfExtract(1000,1,1);
+    CNNextractor surfExtract(1000,1,1);
     vector<cv::KeyPoint> currentKeysSURF;
     cv::Mat currentDescsSURF;
     //END ADDED

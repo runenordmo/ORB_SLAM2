@@ -32,7 +32,7 @@
 
 
 //ADDED
-#include "SURFextractor.h"
+#include "CNNextractor.h"
 
 
 namespace ORB_SLAM2
@@ -72,7 +72,7 @@ protected:
     std::mutex mMutex;
 
     // ADDED
-    SURFextractor mSurfExtract = SURFextractor(1000,1,1);
+    CNNextractor mSurfExtract = CNNextractor(1000,1,1);
     vector<cv::KeyPoint> mvCurrentKeysSURF;
     cv::Mat mCurrentDescsSURF;
 

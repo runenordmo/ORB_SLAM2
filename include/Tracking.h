@@ -33,7 +33,7 @@
 #include"Frame.h"
 #include "ORBVocabulary.h"
 #include"KeyFrameDatabase.h"
-#include"SURFextractor.h"
+#include"CNNextractor.h"
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
@@ -155,8 +155,8 @@ protected:
     LoopClosing* mpLoopClosing;
 
     //ORB
-    SURFextractor* mpSURFextractorLeft, *mpSURFextractorRight;
-    SURFextractor* mpIniSURFextractor;
+    CNNextractor* mpCNNextractorLeft, *mpCNNextractorRight;
+    CNNextractor* mpIniCNNextractor;
 
     //BoW
     ORBVocabulary* mpORBVocabulary;
