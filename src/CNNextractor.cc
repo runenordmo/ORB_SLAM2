@@ -8,6 +8,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 #include <fstream>
+// s_cwd
+#include <unistd.h>
 
 #include "CNNextractor.h"
 
@@ -18,10 +20,8 @@ namespace ORB_SLAM2
 {
 const int EDGE_THRESHOLD = 19;
 
-CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels,
-	std::string filename) :
-	nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
-	mFilename(filename), mFileInputPosition(0)
+CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
+	nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels)
 {
 	mvScaleFactor.resize(nlevels);
 	mvLevelSigma2.resize(nlevels);
@@ -42,6 +42,8 @@ CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels,
 	}
 
 	mvImagePyramid.resize(nlevels);
+	std::string s_cwd(getcwd(NULL,0));
+  	mFilename = s_cwd + "/Vocabulary/kitti_04_descriptors.dat";
 }
 
 //CNN specific

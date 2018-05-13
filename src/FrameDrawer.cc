@@ -89,6 +89,9 @@ cv::Mat FrameDrawer::DrawFrame()
             {
                 cv::line(im,vIniKeys[i].pt,vCurrentKeys[vMatches[i]].pt,
                         cv::Scalar(0,255,0));
+            }else
+            {
+                cv::circle(im,vIniKeys[i].pt,2,cv::Scalar(0,0,255),-1);
             }
         }        
     }

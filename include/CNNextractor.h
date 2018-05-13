@@ -16,8 +16,7 @@ namespace ORB_SLAM2
 	public:
 
 		//CNN specific
-		CNNextractor(int nfeatures, float scaleFactor, int nlevels, 
-			std::string filename);
+		CNNextractor(int nfeatures, float scaleFactor, int nlevels);
 
 		~CNNextractor() {} 
 
@@ -67,7 +66,7 @@ namespace ORB_SLAM2
 		std::vector<float> mvInvLevelSigma2; 
 
 		//CNN specific
-		std::string mFilename;
+		std::string mFilename = "../Vocabulary/kitti_04_descriptors.dat";
 	};
 
 } //namespace ORB_SLAM

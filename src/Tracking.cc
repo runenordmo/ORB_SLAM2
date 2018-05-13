@@ -116,16 +116,13 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    mpCNNextractorLeft = new CNNextractor(nFeatures,fScaleFactor,nLevels,
-        std::string filename);
+    mpCNNextractorLeft = new CNNextractor(nFeatures,fScaleFactor,nLevels);
 
     if(sensor==System::STEREO)
-        mpCNNextractorRight = new CNNextractor(nFeatures,fScaleFactor,nLevels,
-            std::string filename);
+        mpCNNextractorRight = new CNNextractor(nFeatures,fScaleFactor,nLevels);
 
     if(sensor==System::MONOCULAR)
-        mpIniCNNextractor = new CNNextractor(2*nFeatures,fScaleFactor,nLevels,
-            std::string filename);
+        mpIniCNNextractor = new CNNextractor(2*nFeatures,fScaleFactor,nLevels);
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
