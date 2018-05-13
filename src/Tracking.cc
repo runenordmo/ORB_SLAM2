@@ -116,13 +116,16 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    mpCNNextractorLeft = new CNNextractor(nFeatures,fScaleFactor,nLevels);
+    mpCNNextractorLeft = new CNNextractor(nFeatures,fScaleFactor,nLevels,
+        std::string filename);
 
     if(sensor==System::STEREO)
-        mpCNNextractorRight = new CNNextractor(nFeatures,fScaleFactor,nLevels);
+        mpCNNextractorRight = new CNNextractor(nFeatures,fScaleFactor,nLevels,
+            std::string filename);
 
     if(sensor==System::MONOCULAR)
-        mpIniCNNextractor = new CNNextractor(2*nFeatures,fScaleFactor,nLevels);
+        mpIniCNNextractor = new CNNextractor(2*nFeatures,fScaleFactor,nLevels,
+            std::string filename);
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
@@ -235,7 +238,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 }
 
 
-cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
+cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, const int &frameNumber)
 {
     mImGray = im;
 
@@ -255,9 +258,9 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
     }
 
     if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
-        mCurrentFrame = Frame(mImGray,timestamp,mpIniCNNextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        mCurrentFrame = Frame(mImGray,timestamp,frameNumber,mpIniCNNextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
     else
-        mCurrentFrame = Frame(mImGray,timestamp,mpCNNextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        mCurrentFrame = Frame(mImGray,timestamp,frameNumber,mpCNNextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
 

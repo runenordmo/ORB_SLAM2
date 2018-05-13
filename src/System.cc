@@ -223,7 +223,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return Tcw;
 }
 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
+cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -265,7 +265,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
