@@ -61,6 +61,10 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
+#ifdef __APPLE__
+    int main_error = 0;
+    std::thread runthread([&]() { // Sart in new thread}
+#endif
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
@@ -71,7 +75,12 @@ int main(int argc, char **argv)
         if(im.empty())
         {
             cerr << endl << "Failed to load image at: " << vstrImageFilenames[ni] << endl;
+#ifdef __APPLE__
+            main_error = 1;
+            return;
+#else
             return 1;
+#endif
         }
 
 #ifdef COMPILEDWITHC11
@@ -103,6 +112,17 @@ int main(int argc, char **argv)
         if(ttrack<T)
             usleep((T-ttrack)*1e6);
     }
+#ifdef __APPLE__
+    }); // End the thread
+
+    // Start the visualization thread
+    SLAM.StartViewer();
+    cout<< "Viewer started, waiting for thread." << endl;
+    runthread.join();
+    if (main_error != 0)
+        return main_error;
+    cout << "Tracking thread joined..." << endl;
+#endif
 
     // Stop all threads
     SLAM.Shutdown();
