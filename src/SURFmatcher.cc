@@ -25,8 +25,8 @@ namespace ORB_SLAM2
 // Min and max threshold for distance between two features
     //sometime used as:
     //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
-const double SURFmatcher::TH_HIGH = 100;
-const double SURFmatcher::TH_LOW = 10;
+const double SURFmatcher::TH_HIGH = 4000;
+const double SURFmatcher::TH_LOW = 1000;
 const int SURFmatcher::HISTO_LENGTH = 30;
 
 SURFmatcher::SURFmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
