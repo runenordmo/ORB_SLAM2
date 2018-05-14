@@ -26,6 +26,12 @@
 #include <pangolin/pangolin.h>
 #include <iomanip>
 
+static bool has_suffix(const std::string &str, const std::string &suffix)
+{
+    std::size_t index = str.find(suffix, str.size() - suffix.size());
+    return (index != std::string::npos);
+}
+
 namespace ORB_SLAM2
 {
 
@@ -59,11 +65,25 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 
     //Load ORB Vocabulary
-    cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+    cout << endl << "Loading ";
 
     mpVocabulary = new ORBVocabulary();
     //mpVocabulary = new CNNVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    bool bVocLoad = false; // chose loading method based on file extension
+    if(has_suffix(strVocFile, ".bin"))
+    {
+        cout <<" binary Vocabulary..." << endl;
+        bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+    }
+    else if (has_suffix(strVocFile, ".txt"))
+    {
+        cout <<" txt Vocabulary. This could take a while..." << endl;
+        bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    }
+    else
+    {
+        bVocLoad = false;
+    }
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;
