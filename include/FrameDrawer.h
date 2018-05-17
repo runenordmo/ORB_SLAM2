@@ -71,6 +71,8 @@ protected:
 
     std::mutex mMutex;
 
+    int nIniMatches;
+
 };
 
 } //namespace ORB_SLAM

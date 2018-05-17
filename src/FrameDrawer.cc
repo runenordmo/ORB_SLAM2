@@ -48,7 +48,6 @@ cv::Mat FrameDrawer::DrawFrame()
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
-
     //Copy variables within scoped mutex
     {
         unique_lock<mutex> lock(mMutex);
@@ -82,17 +81,19 @@ cv::Mat FrameDrawer::DrawFrame()
 
     //Draw
     if(state==Tracking::NOT_INITIALIZED) //INITIALIZING
-    {
+    {   
+        nIniMatches = 0;
         for(unsigned int i=0; i<vMatches.size(); i++)
         {
+            cv::circle(im,vIniKeys[i].pt,2,cv::Scalar(255,0,0),-1);
             if(vMatches[i]>=0)
             {
+                nIniMatches += 1;
                 cv::line(im,vIniKeys[i].pt,vCurrentKeys[vMatches[i]].pt,
                         cv::Scalar(0,255,0));
+                cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255,0),-1);
             }else
-            {
-                cv::circle(im,vIniKeys[i].pt,2,cv::Scalar(0,0,255),-1);
-            }
+                cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
         }        
     }
     else if(state==Tracking::OK) //TRACKING
@@ -142,7 +143,12 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
     if(nState==Tracking::NO_IMAGES_YET)
         s << " WAITING FOR IMAGES";
     else if(nState==Tracking::NOT_INITIALIZED)
-        s << " TRYING TO INITIALIZE ";
+    {
+        s << " TRYING TO INITIALIZE | ";
+        s << " nCKeys: " << mvCurrentKeys.size();
+        s << " nIniKeys: " << mvIniKeys.size();
+        s << " nIniMatch: " << nIniMatches;
+    }
     else if(nState==Tracking::OK)
     {
         if(!mbOnlyTracking)

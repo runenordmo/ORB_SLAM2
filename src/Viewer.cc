@@ -138,13 +138,13 @@ void Viewer::Run()
         pangolin::FinishFrame();
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
-        #ifdef __APPLE__
-        cv::Mat im_half;
-        cv::resize(im, im_half, cv::Size(), 0.5, 0.5);
-        cv::imshow("ORB-SLAM2: Current Frame",im_half);
-        #else
+        //#ifdef __APPLE__
+        //cv::Mat im_half;
+        //cv::resize(im, im_half, cv::Size(), 0.5, 0.5);
+        //cv::imshow("ORB-SLAM2: Current Frame",im_half);
+        //#else
         cv::imshow("ORB-SLAM2: Current Frame",im);
-        #endif
+        //#endif
         cv::waitKey(mT);
 
         if(menuReset)

@@ -8,6 +8,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 #include <fstream>
+#include <iostream>
 // s_cwd
 #include <unistd.h>
 
@@ -44,7 +45,9 @@ CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
 
 	mvImagePyramid.resize(nlevels);
 	std::string s_cwd(getcwd(NULL,0));
-  	mFilename = s_cwd + "/Vocabulary/kitti_04_descriptors.dat";
+  	//mFilename = s_cwd + "/Vocabulary/kitti_04_descriptors.dat";
+  	//mFilename = s_cwd + "/Vocabulary/euroc_mh1_descriptors.dat";
+  	mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors.dat";
 }
 
 //CNN specific
@@ -61,11 +64,13 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 	ComputePyramid(image);
 
 	// CNN specific part
+	//usleep(1000000);
 	_keypoints.clear();
 	_descriptors = cv::Mat();
 
 	std::ifstream f{ mFilename, std::ios::binary };
 	if (!f) { //couldn't open the file
+		std::cout << "Can't open: " << mFilename << std::endl;
 		return;
 	}
 	
