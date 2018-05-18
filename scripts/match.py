@@ -6,19 +6,6 @@ from pathlib import Path
 import argparse
 
 
-def get_image_pair(path):
-    img1_path = Path(path)
-    
-    img1_name = img1_path.stem
-    ext = img1_path.suffix
-    assert img1_name.isnumeric(), "img1_name must be numeric"
-
-    img2_name = '{:06d}'.format(int(img1_name) + 1) + ext
-    img1 = Image(img1_path)
-    img2 = Image(img1_path.with_name(img2_name))
-    return (img1, img2)
-
-
 def match_internal(descriptors1, descriptors2, swap = False):
     matches = []
     for i,desc1 in enumerate(descriptors1):
@@ -65,18 +52,19 @@ def draw_matches(output, img1, img2, descriptors1, descriptors2, matches, drawLi
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--image", help="path to image (in sequence)")
+parser.add_argument("images", help="images to match", metavar="IMG", nargs=2)
 parser.add_argument("-o", "--output", help="path to store output file", default="output/")
 parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=1000)
 parser.add_argument("-l", "--lines", help="suppress drawing match lines", action="store_false")
 args = parser.parse_args()
 
 assert args.output.endswith('/'), "output must end with '/'"
-assert args.image != None, "image is mandatory"
 
 
 detector = FeatureDetector(args.threshold)
 
-img1, img2 = get_image_pair(args.image)
+img1 = Image(args.images[0])
+img2 = Image(args.images[1])
 
 descriptors1 = detector.detect(img1)
 print(f'Image 1: Found {len(descriptors1)} descriptors')
