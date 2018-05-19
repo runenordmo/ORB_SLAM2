@@ -55,14 +55,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--image", help="path to image (in sequence)")
 parser.add_argument("images", help="images to match", metavar="IMG", nargs=2)
 parser.add_argument("-o", "--output", help="path to store output file", default="output/")
-parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=1000)
+parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=500)
+parser.add_argument("-n", "--number", help="number of keypoints per region", type=int, default=3)
 parser.add_argument("-l", "--lines", help="suppress drawing match lines", action="store_false")
 args = parser.parse_args()
 
 assert args.output.endswith('/'), "output must end with '/'"
 
 
-detector = FeatureDetector(args.threshold)
+detector = FeatureDetector(args.threshold, args.number)
 
 img1 = Image(args.images[0])
 img2 = Image(args.images[1])

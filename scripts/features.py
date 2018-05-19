@@ -59,10 +59,14 @@ class Image:
 
 
 class Keypoint:
-    def __init__(self, x, y, fm):
+    def __init__(self, x, y, fm, val):
         self.x = x
         self.y = y
         self.fm = fm
+        self.val = val
+
+    def __repr__(self):
+        return f'({self.x},{self.y},{self.fm},{self.val})'
 
 
 class KpDesc:
@@ -87,6 +91,27 @@ class KpDesc:
         return (r,g,b)
 
 
+class Region:
+    def __init__(self):
+        self._keypoints = []
+
+    def add_keypoint(self, new_kp):
+        if self._keypoints == []:
+            self._keypoints.append(new_kp)
+        for i,cur_kp in enumerate(self._keypoints):
+            if (new_kp.x, new_kp.y) == (cur_kp.x, cur_kp.y):
+                if new_kp.val > cur_kp.val:
+                    cur_kp = new_kp
+                break
+            if (new_kp.x, new_kp.y) < (cur_kp.x, cur_kp.y):
+                self._keypoints.insert(i, new_kp)
+                break
+        
+    def get_top_keypoints(self, nr):
+        kps = sorted(self._keypoints, key=lambda kp: kp.val, reverse=True)
+        return kps[0:nr]
+
+
 def refine_max(x, y, fm):
     assert 0 < x < fm.shape[1]-1, "x is out of range"
     assert 0 < y < fm.shape[0]-1, "y is out of range"
@@ -107,8 +132,9 @@ def refine_max(x, y, fm):
 
 
 class FeatureDetector:
-    def __init__(self, threshold):
+    def __init__(self, threshold, kp_number):
         self._threshold = threshold
+        self._kp_number = kp_number
         base = VGG16(weights='imagenet')
         self._model = Model(inputs=base.input, outputs=base.get_layer('block4_conv3').output)
 
@@ -122,25 +148,30 @@ class FeatureDetector:
         featuremaps = self._model.predict(x)
         return np.squeeze(featuremaps, axis=0)
 
-    def find_keypoints(self, featuremaps):
+    def create_regions(self, featuremaps, img_sz):
         width = featuremaps.shape[1]
         height = featuremaps.shape[0]
-        keypoints = []
-        seen = set()
-        for r in range(int(height/REGION_SZ)):
-            for c in range(int(width/REGION_SZ)):
-                fm_region = featuremaps[r*REGION_SZ:(r+1)*REGION_SZ, c*REGION_SZ:(c+1)*REGION_SZ,:]
+        regions = []
+        for r in range(math.floor(height/REGION_SZ)):
+            for c in range(math.floor(width/REGION_SZ)):
+                rx = c*REGION_SZ
+                ry = r*REGION_SZ
+                if rx > img_sz[0] or ry > img_sz[1]:
+                    continue
+
+                fm_region = featuremaps[ry:ry+REGION_SZ, rx:rx+REGION_SZ,:]
+                region = Region()
                 for i,fm in enumerate(np.rollaxis(fm_region,2)):
                     max_idx = np.unravel_index(np.argmax(fm, axis=None), fm.shape)
-                    x = max_idx[1] + c*REGION_SZ
-                    y = max_idx[0] + r*REGION_SZ
-                    if (x,y) not in seen:
-                        if fm[max_idx] > self._threshold:
-                            seen.add((x,y))
-                            if 0 < x < width-1 and 0 < y < height-1:
-                                keypoints.append(Keypoint(x,y,i))
+                    max_val = fm[max_idx]
+                    x = max_idx[1] + rx
+                    y = max_idx[0] + ry
+                    if max_val > self._threshold:
+                        if 0 < x < width-1 and 0 < y < height-1:
+                            region.add_keypoint(Keypoint(x,y,i,max_val))
+                regions.append(region)
 
-        return keypoints
+        return regions
 
     def create_featuremaps(self, img):
         row_fms = []
@@ -158,14 +189,16 @@ class FeatureDetector:
         descriptors = []
         
         featuremaps = self.create_featuremaps(img)
-        keypoints = self.find_keypoints(featuremaps)
-        for kp in keypoints:
-            x,y = refine_max(kp.x, kp.y, featuremaps[:,:,kp.fm])
-            x = int(x*CNN_SCALE + CNN_SCALE/2)
-            y = int(y*CNN_SCALE + CNN_SCALE/2)
-            if 0 <= x < img.width and 0 <= y < img.height:
-                desc = featuremaps[kp.y,kp.x,:]
-                descriptors.append(KpDesc((x,y),desc,kp.fm))
+        regions = self.create_regions(featuremaps, img.size)
+
+        for region in regions:
+            for kp in region.get_top_keypoints(self._kp_number):
+                x,y = refine_max(kp.x, kp.y, featuremaps[:,:,kp.fm])
+                x = int(x*CNN_SCALE + CNN_SCALE/2)
+                y = int(y*CNN_SCALE + CNN_SCALE/2)
+                if 0 <= x < img.width and 0 <= y < img.height:
+                    desc = featuremaps[kp.y,kp.x,:]
+                    descriptors.append(KpDesc((x,y),desc,kp.fm))
 
         return descriptors
 
