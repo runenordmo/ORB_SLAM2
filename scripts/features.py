@@ -52,17 +52,27 @@ class Image:
 
         draw = ImageDraw.Draw(copy)
         for desc in descriptors:
-            x,y = desc.kp
+            x,y = desc.kp()
             draw.ellipse((x-2,y-2,x+2,y+2), outline=desc.color())
 
         return copy
 
 
+class Keypoint:
+    def __init__(self, x, y, fm):
+        self.x = x
+        self.y = y
+        self.fm = fm
+
+
 class KpDesc:
     def __init__(self, kp, desc, fm):
-        self.kp = kp
+        self._kp = kp
         self.desc = desc
         self._fm = fm
+
+    def kp(self):
+        return self._kp
 
     def color(self):
         fm = self._fm
@@ -128,7 +138,7 @@ class FeatureDetector:
                         if fm[max_idx] > self._threshold:
                             seen.add((x,y))
                             if 0 < x < width-1 and 0 < y < height-1:
-                                keypoints.append((x,y,i))
+                                keypoints.append(Keypoint(x,y,i))
 
         return keypoints
 
@@ -149,13 +159,13 @@ class FeatureDetector:
         
         featuremaps = self.create_featuremaps(img)
         keypoints = self.find_keypoints(featuremaps)
-        for x_kp,y_kp,fm in keypoints:
-            x,y = refine_max(x_kp, y_kp, featuremaps[:,:,fm])
+        for kp in keypoints:
+            x,y = refine_max(kp.x, kp.y, featuremaps[:,:,kp.fm])
             x = int(x*CNN_SCALE + CNN_SCALE/2)
             y = int(y*CNN_SCALE + CNN_SCALE/2)
             if 0 <= x < img.width and 0 <= y < img.height:
-                desc = featuremaps[y_kp,x_kp,:]
-                descriptors.append(KpDesc((x,y),desc,fm))
+                desc = featuremaps[kp.y,kp.x,:]
+                descriptors.append(KpDesc((x,y),desc,kp.fm))
 
         return descriptors
 

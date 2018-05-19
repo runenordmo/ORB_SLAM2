@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from features import *
+from features import Image, FeatureDetector
 import ctypes as ct
 import os
 import argparse
@@ -25,7 +25,7 @@ def save_debug_img(output, img_name, img, descriptors):
 
 def write_descriptors(file, descriptors):
     for desc in descriptors:
-        x,y = desc.kp
+        x,y = desc.kp()
         arr = desc.desc
         file.write(ct.c_int32(x))
         file.write(ct.c_int32(y))

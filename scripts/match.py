@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-from features import *
+from features import Image, FeatureDetector
 from PIL import ImageDraw, Image as PILImage
 from pathlib import Path
+import numpy as np
 import argparse
 
 
@@ -12,7 +13,7 @@ def match_internal(descriptors1, descriptors2, swap = False):
         argmin = None
         dist_min = np.inf
         for j,desc2 in enumerate(descriptors2):
-           dist = np.linalg.norm(desc1.desc - desc2.desc); 
+           dist = np.linalg.norm(desc1.desc - desc2.desc)
            if dist < dist_min:
                dist_min = dist
                argmin = j
@@ -42,8 +43,8 @@ def draw_matches(output, img1, img2, descriptors1, descriptors2, matches, drawLi
     draw = ImageDraw.Draw(new_img)
     if drawLines:
         for i,j in matches:
-            x1,y1 = descriptors1[i].kp
-            x2,y2 = descriptors2[j].kp
+            x1,y1 = descriptors1[i].kp()
+            x2,y2 = descriptors2[j].kp()
             draw.line((x1,y1, x2,y2+img1.height), fill=(0,255,0))
 
     new_img.save(output + 'matches.png')
