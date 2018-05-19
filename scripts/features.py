@@ -11,6 +11,8 @@ CNN_FM_SZ = 28
 CNN_FM_CNT = 512
 CNN_SCALE = CNN_INP_SZ / CNN_FM_SZ
 
+REGION_CNT = 7
+REGION_SZ = int(CNN_FM_SZ / REGION_CNT)
 
 
 class Image:
@@ -20,24 +22,30 @@ class Image:
         self.width = img.width
         self.height = img.height
         self._orig = img
+        self.cols = math.ceil(img.width / CNN_INP_SZ)
+        self.rows = math.ceil(img.height / CNN_INP_SZ)
 
-        cols = math.ceil(img.width / CNN_INP_SZ)
-        rows = math.ceil(img.height / CNN_INP_SZ)
-        xpad = cols * CNN_INP_SZ - img.width
-        ypad = rows * CNN_INP_SZ - img.height
+        xpad = self.cols * CNN_INP_SZ - img.width
+        ypad = self.rows * CNN_INP_SZ - img.height
         padded_img = ImageOps.expand(img, (0,0,xpad,ypad))
-        assert padded_img.size == (cols * CNN_INP_SZ, rows * CNN_INP_SZ), "Padded image size is incorrect"
+        assert padded_img.size == (self.cols * CNN_INP_SZ, self.rows * CNN_INP_SZ), "Padded image size is incorrect"
 
-        self.parts = []
-        for r in range(rows):
-            for c in range(cols):
+        self._parts = []
+        for r in range(self.rows):
+            rows = []
+            for c in range(self.cols):
                 x = c * CNN_INP_SZ
                 y = r * CNN_INP_SZ
                 assert x <= padded_img.width - CNN_INP_SZ, "x is out of range"
                 assert y <= padded_img.height - CNN_INP_SZ, "y is out of range"
                 subimage = padded_img.crop(box=(x,y,x+CNN_INP_SZ,y+CNN_INP_SZ))
-                self.parts.append((x, y, subimage))
-        assert len(self.parts) == rows * cols, "Number of image parts is incorrect"
+                rows.append(subimage)
+            assert len(rows) == self.cols, "Number of image cols is incorrect"
+            self._parts.append(rows)
+        assert len(self._parts) == self.rows, "Number of image rows is incorrect"
+
+    def parts(self, row, col):
+        return self._parts[row][col]
 
     def draw_descriptors(self, descriptors):
         copy = self._orig.copy()
@@ -70,9 +78,8 @@ class KpDesc:
 
 
 def refine_max(x, y, fm):
-    assert fm.shape == (CNN_FM_SZ, CNN_FM_SZ), "Unexpected feature maps shape"
-    assert 0 < x < CNN_FM_SZ-1, "x is out of range"
-    assert 0 < y < CNN_FM_SZ-1, "y is out of range"
+    assert 0 < x < fm.shape[1]-1, "x is out of range"
+    assert 0 < y < fm.shape[0]-1, "y is out of range"
 
     Dx = 0.5 * (fm[y,x+1] - fm[y,x-1])
     Dy = 0.5 * (fm[y+1,x] - fm[y-1,x])
@@ -106,37 +113,49 @@ class FeatureDetector:
         return np.squeeze(featuremaps, axis=0)
 
     def find_keypoints(self, featuremaps):
-        assert featuremaps.shape == (CNN_FM_SZ, CNN_FM_SZ, CNN_FM_CNT), "Unexpected feature maps shape"
-
-        sense_fms = featuremaps[1:-1,1:-1,:]
+        width = featuremaps.shape[1]
+        height = featuremaps.shape[0]
         keypoints = []
         seen = set()
-        for i,fm in enumerate(np.rollaxis(sense_fms,2)):
-            max = np.unravel_index(np.argmax(fm, axis=None), fm.shape)
-            x = max[1]+1
-            y = max[0]+1
-            if (x,y) not in seen:
-                if fm[max] > self._threshold:
-                    seen.add((x,y))
-                    keypoints.append((x,y,i))
+        for r in range(int(height/REGION_SZ)):
+            for c in range(int(width/REGION_SZ)):
+                fm_region = featuremaps[r*REGION_SZ:(r+1)*REGION_SZ, c*REGION_SZ:(c+1)*REGION_SZ,:]
+                for i,fm in enumerate(np.rollaxis(fm_region,2)):
+                    max_idx = np.unravel_index(np.argmax(fm, axis=None), fm.shape)
+                    x = max_idx[1] + c*REGION_SZ
+                    y = max_idx[0] + r*REGION_SZ
+                    if (x,y) not in seen:
+                        if fm[max_idx] > self._threshold:
+                            seen.add((x,y))
+                            if 0 < x < width-1 and 0 < y < height-1:
+                                keypoints.append((x,y,i))
 
         return keypoints
 
+    def create_featuremaps(self, img):
+        row_fms = []
+        for r in range(img.rows):
+            col_fms = []
+            for c in range(img.cols):
+                fm = self.produce_featuremaps(img.parts(r,c))
+                col_fms.append(fm)
+            row_fms.append(np.hstack(col_fms))
+        full_fm = np.vstack(row_fms)
+        assert full_fm.shape == (img.rows*CNN_FM_SZ, img.cols*CNN_FM_SZ, CNN_FM_CNT), "Unexpected feature maps shape"
+        return full_fm
+
     def detect(self, img):
         descriptors = []
-        for x_img,y_img,img_part in img.parts:
-            featuremaps = self.produce_featuremaps(img_part)
-
-            keypoints = self.find_keypoints(featuremaps)
-            for x_kp,y_kp,fm in keypoints:
-                x,y = refine_max(x_kp, y_kp, featuremaps[:,:,fm])
-                x = int(x_img + x*CNN_SCALE + CNN_SCALE/2)
-                y = int(y_img + y*CNN_SCALE + CNN_SCALE/2)
-                assert x < x_img + CNN_INP_SZ, "x is out of range"
-                assert y < y_img + CNN_INP_SZ, "y is out of range"
-                if 0 <= x < img.width and 0 <= y < img.height:
-                    desc = featuremaps[y_kp,x_kp,:]
-                    descriptors.append(KpDesc((x,y),desc,fm))
+        
+        featuremaps = self.create_featuremaps(img)
+        keypoints = self.find_keypoints(featuremaps)
+        for x_kp,y_kp,fm in keypoints:
+            x,y = refine_max(x_kp, y_kp, featuremaps[:,:,fm])
+            x = int(x*CNN_SCALE + CNN_SCALE/2)
+            y = int(y*CNN_SCALE + CNN_SCALE/2)
+            if 0 <= x < img.width and 0 <= y < img.height:
+                desc = featuremaps[y_kp,x_kp,:]
+                descriptors.append(KpDesc((x,y),desc,fm))
 
         return descriptors
 
