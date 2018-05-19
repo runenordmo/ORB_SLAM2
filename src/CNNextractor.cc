@@ -19,6 +19,7 @@ using namespace std;
 namespace ORB_SLAM2
 {
 const int EDGE_THRESHOLD = 19;
+const int CNN_DESCRIPTOR_SIZE = 512;
 
 CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
 	nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels)
@@ -68,46 +69,77 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 		return;
 	}
 	
-	// Keep track of frame number, keypoints and descriptors
-	int currFrameNumber = 0;
-	//f.seekg(0);
-
-	while (!f.eof()) {
-
-		std::array<float, 512> desc; //single descriptor
-		cv::KeyPoint keyP(0, 0, 1, -1, 0, 0, -1); //single keypoint
-
-		cv::Point pt;
-		f.read(reinterpret_cast<char*>(&pt.x), sizeof(std::int32_t));
-		f.read(reinterpret_cast<char*>(&pt.y), sizeof(std::int32_t));
-
-		if (!f) { _keypoints.clear(); _descriptors = cv::Mat(); f.close(); return; }
-		else {
-			bool last_feature_in_frame = (pt.x == -1 && pt.y == -1);
+	if (mFrameIndexesInFile.empty()) { //Must read through file to find all the frames' file indexes
+		mFrameIndexesInFile.push_back(f.tellg());
+		while (true) {
+			//Read first two coordinates, abort if reading goes wrong
+			cv::Point dummyPt;
+			f.read(reinterpret_cast<char*>(&dummyPt.x), sizeof(std::int32_t));
+			f.read(reinterpret_cast<char*>(&dummyPt.y), sizeof(std::int32_t));
+			if (f.eof()) { //if we have reached EOF, the last index added didn't correspond to a frame
+				if (!mFrameIndexesInFile.empty()) {mFrameIndexesInFile.pop_back();}
+				break; 
+			}
+			if (!f) { mFrameIndexesInFile.clear(); _keypoints.clear(); _descriptors = cv::Mat(); f.close(); return; }
+			
+			bool last_feature_in_frame = (dummyPt.x == -1 && dummyPt.y == -1);
 			if (!last_feature_in_frame) {
-				//read descriptor
-				f.read(reinterpret_cast<char *>(&desc), sizeof(desc));
-				if (!f) { _keypoints.clear();  _descriptors = cv::Mat(); f.close(); return; }
-				else { //reading went well, save keypoint and descriptor
-					if (currFrameNumber == frameNumber) { //ready to return the features!
-						keyP.pt = pt;
-						_keypoints.push_back(keyP);
-						_descriptors.push_back(cv::Mat(desc, true).reshape(1, 1));
-					}
-				}
+				//Read descriptor, abort if reading goes wrong
+				std::array<float, CNN_DESCRIPTOR_SIZE> dummyDesc;
+				f.read(reinterpret_cast<char *>(&dummyDesc), sizeof(dummyDesc));
+				if (!f) { mFrameIndexesInFile.clear(); _keypoints.clear(); _descriptors = cv::Mat(); f.close(); return; }
 			}
-			else { //last feature in frame
-				if (currFrameNumber == frameNumber) { //ready to return the features!
-					f.close(); return;
-				}
-				else {
-					currFrameNumber++;
-				}
+			else{
+				mFrameIndexesInFile.push_back(f.tellg());
 			}
+		}
+		f.close();
+	}
+
+	//At this point, mFrameIndexesInFile is not empty
+	//Read features from the appropriate frame
+	int frameIndexInFile;
+	if (frameNumber < mFrameIndexesInFile.size()) {
+		frameIndexInFile = mFrameIndexesInFile[frameNumber];
+	}
+	else {
+		_keypoints.clear(); _descriptors = cv::Mat(); return;
+	}
+
+	std::ifstream f2{ mFilename, std::ios::binary };
+	if (!f2) { //couldn't open the file
+		return;
+	}
+
+	f2.seekg(frameIndexInFile);
+
+	while (true) {
+		//Set up variables to save keypoint and descriptor in
+		cv::KeyPoint keyP(0, 0, 1, -1, 0, 1, -1); //check the parameters once more?
+		std::array<float, 512> desc;
+
+		//Read first two coordinates, abort if reading goes wrong
+		cv::Point pt;
+		f2.read(reinterpret_cast<char*>(&pt.x), sizeof(std::int32_t));
+		f2.read(reinterpret_cast<char*>(&pt.y), sizeof(std::int32_t));
+		if (f2.eof()) { _keypoints.clear();  _descriptors = cv::Mat(); f2.close(); return; }
+		if (!f2) { _keypoints.clear(); _descriptors = cv::Mat(); f2.close(); return; }
+
+		bool last_feature_in_frame = (pt.x == -1 && pt.y == -1);
+		if (!last_feature_in_frame) {
+			//Read descriptor, abort if reading goes wrong
+			f2.read(reinterpret_cast<char *>(&desc), sizeof(desc));
+			if (!f2) { _keypoints.clear();  _descriptors = cv::Mat(); f2.close(); return; }
+			
+			//Save keypoint and descriptor
+			keyP.pt = pt;
+			_keypoints.push_back(keyP);
+			_descriptors.push_back(cv::Mat(desc, true).reshape(1, 1));
+		}
+		else { //ready to return the features!
+			f2.close(); return;
 		}	
 	}
-	//reached EOF
-	_keypoints.clear();  _descriptors = cv::Mat(); f.close(); return;
 }
 
 

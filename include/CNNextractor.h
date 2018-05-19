@@ -67,6 +67,7 @@ namespace ORB_SLAM2
 
 		//CNN specific
 		std::string mFilename = "../Vocabulary/kitti_04_descriptors.dat";
+		std::vector<int> mFrameIndexesInFile;
 	};
 
 } //namespace ORB_SLAM
