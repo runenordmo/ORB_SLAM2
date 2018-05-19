@@ -46,8 +46,10 @@ CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
 	mvImagePyramid.resize(nlevels);
 	std::string s_cwd(getcwd(NULL,0));
   	//mFilename = s_cwd + "/Vocabulary/kitti_04_descriptors.dat";
-  	//mFilename = s_cwd + "/Vocabulary/euroc_mh1_descriptors.dat";
-  	mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors.dat";
+
+  	mFilename = s_cwd + "/Vocabulary/euroc_mh1_descriptors.dat";
+  	//mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors.dat";
+  	//mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors2.dat";
 }
 
 //CNN specific

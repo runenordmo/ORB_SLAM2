@@ -112,7 +112,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     int nFeatures = 1000;//fSettings["ORBextractor.nFeatures"];
     float fScaleFactor = 8;//fSettings["ORBextractor.scaleFactor"];
-    int nLevels = 1;//fSettings["ORBextractor.nLevels"];
+    int nLevels = 2;//fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
@@ -691,7 +691,8 @@ void Tracking::CreateInitialMapMonocular()
 
     if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100)
     {
-        cout << "Wrong initialization, reseting..." << endl;
+        cout << "Wrong initialization; only " << pKFcur->TrackedMapPoints(1);
+        cout << "/100 tracked MapPoints. reseting..." << endl;
         Reset();
         return;
     }
@@ -703,7 +704,7 @@ void Tracking::CreateInitialMapMonocular()
 
     // Scale points
     vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
-    for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
+    for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++) 
     {
         if(vpAllMapPoints[iMP])
         {
@@ -1375,7 +1376,7 @@ bool Tracking::Relocalization()
         else
         {
             int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
-            if(nmatches<15)
+            if(nmatches<15) //Default 15
             {
                 vbDiscarded[i] = true;
                 continue;
@@ -1389,6 +1390,7 @@ bool Tracking::Relocalization()
             }
         }
     }
+    //cout << "nRealocation candidates: "<< nCandidates << endl;
 
     // Alternatively perform some iterations of P4P RANSAC
     // Until we found a camera pose supported by enough inliers

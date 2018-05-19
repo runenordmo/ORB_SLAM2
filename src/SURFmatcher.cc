@@ -25,9 +25,11 @@ namespace ORB_SLAM2
 // Min and max threshold for distance between two features
     //sometime used as:
     //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
+
 const double SURFmatcher::TH_HIGH = 4000;
-const double SURFmatcher::TH_LOW = 1000;
+const double SURFmatcher::TH_LOW = 2000;
 const int SURFmatcher::HISTO_LENGTH = 30;
+
 
 SURFmatcher::SURFmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
 {
@@ -183,9 +185,8 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
 
                 if(!pMP)
                     continue;
-
                 if(pMP->isBad())
-                    continue;                
+                    continue;
                 
                 const cv::Mat &dKF= pKF->mDescriptors.row(realIdxKF);
 
@@ -215,7 +216,6 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
                         bestDist2=dist;
                     }
                 }
-
                 if(bestDist1<=TH_LOW)
                 {
                     if(static_cast<float>(bestDist1)<mfNNratio*static_cast<float>(bestDist2))
@@ -410,7 +410,7 @@ int SURFmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2
     {
         cv::KeyPoint kp1 = F1.mvKeysUn[i1];
         int level1 = kp1.octave;
-        if(level1>0)
+        if(level1>1) // default: 0
             continue;
 
         vector<size_t> vIndices2 = F2.GetFeaturesInArea(vbPrevMatched[i1].x,vbPrevMatched[i1].y, windowSize,level1,level1);
