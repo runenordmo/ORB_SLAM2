@@ -26,6 +26,7 @@ namespace ORB_SLAM2
     //sometime used as:
     //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
 
+
 const double SURFmatcher::TH_HIGH = 4000;
 const double SURFmatcher::TH_LOW = 2000;
 const int SURFmatcher::HISTO_LENGTH = 30;
@@ -182,12 +183,11 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
                 const unsigned int realIdxKF = vIndicesKF[iKF];
 
                 MapPoint* pMP = vpMapPointsKF[realIdxKF];
-
                 if(!pMP)
                     continue;
                 if(pMP->isBad())
                     continue;
-                
+
                 const cv::Mat &dKF= pKF->mDescriptors.row(realIdxKF);
 
                 double bestDist1=DBL_MAX;
