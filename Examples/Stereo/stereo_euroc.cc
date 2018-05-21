@@ -112,6 +112,10 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
+#ifdef __APPLE__
+    int main_error = 0;
+    std::thread runthread([&]() { // Sart in new thread}
+#endif
     cv::Mat imLeft, imRight, imLeftRect, imRightRect;
     for(int ni=0; ni<nImages; ni++)
     {
@@ -123,14 +127,24 @@ int main(int argc, char **argv)
         {
             cerr << endl << "Failed to load image at: "
                  << string(vstrImageLeft[ni]) << endl;
+#ifdef __APPLE__
+            main_error = 1;
+            return;
+#else
             return 1;
+#endif
         }
 
         if(imRight.empty())
         {
             cerr << endl << "Failed to load image at: "
                  << string(vstrImageRight[ni]) << endl;
+#ifdef __APPLE__
+            main_error = 1;
+            return;
+#else
             return 1;
+#endif
         }
 
         cv::remap(imLeft,imLeftRect,M1l,M2l,cv::INTER_LINEAR);
@@ -146,7 +160,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
+        SLAM.TrackStereo(imLeftRect,imRightRect,tframe, ni);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -168,6 +182,17 @@ int main(int argc, char **argv)
         if(ttrack<T)
             usleep((T-ttrack)*1e6);
     }
+#ifdef __APPLE__
+    }); // End the thread
+
+    // Start the visualization thread
+    SLAM.StartViewer();
+    cout<< "Viewer started, waiting for thread." << endl;
+    runthread.join();
+    if (main_error != 0)
+        return main_error;
+    cout << "Tracking thread joined..." << endl;
+#endif
 
     // Stop all threads
     SLAM.Shutdown();

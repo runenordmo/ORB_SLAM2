@@ -58,8 +58,8 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, CNNextractor* extractorLeft, CNNextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
-    :mpORBvocabulary(voc),mpCNNextractorLeft(extractorLeft),mpCNNextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
+Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, const int &frameNumber, CNNextractor* extractorLeft, CNNextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+    :mpORBvocabulary(voc),mpCNNextractorLeft(extractorLeft),mpCNNextractorRight(extractorRight), mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
      mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
     // Frame ID
@@ -472,7 +472,7 @@ void Frame::ComputeStereoMatches()
     const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
 
     const int nRows = mpCNNextractorLeft->mvImagePyramid[0].rows;
-
+    const int nCols = mpCNNextractorLeft->mvImagePyramid[0].cols;
     //Assign keypoints to row table
     vector<vector<size_t> > vRowIndices(nRows,vector<size_t>());
 
@@ -485,14 +485,15 @@ void Frame::ComputeStereoMatches()
     {
         const cv::KeyPoint &kp = mvKeysRight[iR];
         const float &kpY = kp.pt.y;
+        
         const float r = 2.0f*mvScaleFactors[mvKeysRight[iR].octave];
-        const int maxr = ceil(kpY+r);
-        const int minr = floor(kpY-r);
-
+        
+        const int maxr = min(nRows-1,int(ceil(kpY+r)));
+        const int minr = max(0,int(floor(kpY-r)));
+        
         for(int yi=minr;yi<=maxr;yi++)
             vRowIndices[yi].push_back(iR);
     }
-
     // Set limits for search
     const float minZ = mb;
     const float minD = 0;
@@ -510,7 +511,6 @@ void Frame::ComputeStereoMatches()
         const float &uL = kpL.pt.x;
 
         const vector<size_t> &vCandidates = vRowIndices[vL];
-
         if(vCandidates.empty())
             continue;
 
@@ -519,12 +519,10 @@ void Frame::ComputeStereoMatches()
 
         if(maxU<0)
             continue;
-
         double bestDist = SURFmatcher::TH_HIGH;
         size_t bestIdxR = 0;
 
         const cv::Mat &dL = mDescriptors.row(iL);
-
         // Compare descriptor to right keypoints
         for(size_t iC=0; iC<vCandidates.size(); iC++)
         {
@@ -552,56 +550,55 @@ void Frame::ComputeStereoMatches()
         // Subpixel match by correlation
         if(bestDist<thOrbDist)
         {
+            
             // coordinates in image pyramid at keypoint scale
             const float uR0 = mvKeysRight[bestIdxR].pt.x;
-            const float scaleFactor = mvInvScaleFactors[kpL.octave];
+            const float scaleFactor = mvInvScaleFactors[0];
             const float scaleduL = round(kpL.pt.x*scaleFactor);
             const float scaledvL = round(kpL.pt.y*scaleFactor);
             const float scaleduR0 = round(uR0*scaleFactor);
 
             // sliding window search
             const int w = 5;
-            cv::Mat IL = mpCNNextractorLeft->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
+            if (scaledvL-w < 0 || scaledvL+w+1 >= nRows)
+                continue;
+            if (scaleduL-w < 0 || scaleduL+w+1 >= nCols)
+                continue;
+
+            cv::Mat IL = mpCNNextractorLeft->mvImagePyramid[0].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
             IL.convertTo(IL,CV_32F);
             IL = IL - IL.at<float>(w,w) *cv::Mat::ones(IL.rows,IL.cols,CV_32F);
-
             double bestDist = DBL_MAX;
             int bestincR = 0;
             const int L = 5;
             vector<double> vDists;
             vDists.resize(2*L+1);
 
-            const float iniu = scaleduR0+L-w;
+            const float iniu = scaleduR0-L-w;
             const float endu = scaleduR0+L+w+1;
-            if(iniu<0 || endu >= mpCNNextractorRight->mvImagePyramid[kpL.octave].cols)
+            if(iniu<0 || endu >= nCols)
                 continue;
 
             for(int incR=-L; incR<=+L; incR++)
-            {
-                cv::Mat IR = mpCNNextractorRight->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
+            {   
+                cv::Mat IR = mpCNNextractorRight->mvImagePyramid[0].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
                 IR.convertTo(IR,CV_32F);
                 IR = IR - IR.at<float>(w,w) *cv::Mat::ones(IR.rows,IR.cols,CV_32F);
-
                 float dist = cv::norm(IL,IR,cv::NORM_L1);
                 if(dist<bestDist)
                 {
                     bestDist =  dist;
                     bestincR = incR;
                 }
-
                 vDists[L+incR] = dist;
             }
-
             if(bestincR==-L || bestincR==L)
                 continue;
-
             // Sub-pixel match (Parabola fitting)
             const float dist1 = vDists[L+bestincR-1];
             const float dist2 = vDists[L+bestincR];
             const float dist3 = vDists[L+bestincR+1];
-
             const float deltaR = (dist1-dist3)/(2.0f*(dist1+dist3-2.0f*dist2));
-
             if(deltaR<-1 || deltaR>1)
                 continue;
 
@@ -621,6 +618,7 @@ void Frame::ComputeStereoMatches()
                 mvuRight[iL] = bestuR;
                 vDistIdx.push_back(pair<int,int>(bestDist,iL));
             }
+
         }
     }
 
