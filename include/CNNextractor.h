@@ -24,7 +24,7 @@ namespace ORB_SLAM2
 		// Mask is ignored in the current implementation.
 		//CNN specific
 		void operator()(cv::InputArray _image, int frameNumber, cv::InputArray _mask,
-			std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors);
+			std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors, const std::string &descriptorFile);
 
 		int inline GetLevels() {
 			return nlevels;

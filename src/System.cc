@@ -141,7 +141,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser->SetLocalMapper(mpLocalMapper);
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const int &frameNumber)
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const string &leftDescriptorFile, const string &rightDescriptorFile, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=STEREO)
     {
@@ -183,7 +183,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp,frameNumber);
+    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,leftDescriptorFile,rightDescriptorFile,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
@@ -243,7 +243,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return Tcw;
 }
 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const int &frameNumber)
+cv::Mat System::TrackMonocular(const cv::Mat &im, const string &descriptorFile, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -285,7 +285,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp,frameNumber);
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,descriptorFile,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;

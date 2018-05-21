@@ -58,9 +58,9 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, const int &frameNumber, CNNextractor* extractorLeft, CNNextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight,const string &leftDescriptorFile, const string &rightDescriptorFile, const double &timeStamp, const int &frameNumber, CNNextractor* extractorLeft, CNNextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
     :mpORBvocabulary(voc),mpCNNextractorLeft(extractorLeft),mpCNNextractorRight(extractorRight), mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
-     mpReferenceKF(static_cast<KeyFrame*>(NULL))
+     mpReferenceKF(static_cast<KeyFrame*>(NULL)), mDescriptorFile(leftDescriptorFile),mRightDescriptorFile(rightDescriptorFile)
 {
     // Frame ID
     mnId=nNextId++;
@@ -171,9 +171,9 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 }
 
 
-Frame::Frame(const cv::Mat &imGray, const double &timeStamp, const int &frameNumber, CNNextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+Frame::Frame(const cv::Mat &imGray, const string &descriptorFile, const double &timeStamp, const int &frameNumber, CNNextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
     :mpORBvocabulary(voc),mpCNNextractorLeft(extractor),mpCNNextractorRight(static_cast<CNNextractor*>(NULL)),
-     mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
+     mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),mDescriptorFile(descriptorFile)
 {
     // Frame ID
     mnId=nNextId++;
@@ -247,9 +247,9 @@ void Frame::AssignFeaturesToGrid()
 void Frame::ExtractORB(int flag, const cv::Mat &im)
 {
     if(flag==0)
-        (*mpCNNextractorLeft)(im,mFrameNumber,cv::Mat(),mvKeys,mDescriptors);
+        (*mpCNNextractorLeft)(im,mFrameNumber,cv::Mat(),mvKeys,mDescriptors,mDescriptorFile);
     else
-        (*mpCNNextractorRight)(im,mFrameNumber,cv::Mat(),mvKeysRight,mDescriptorsRight);
+        (*mpCNNextractorRight)(im,mFrameNumber,cv::Mat(),mvKeysRight,mDescriptorsRight,mRightDescriptorFile);
 }
 
 void Frame::SetPose(cv::Mat Tcw)

@@ -44,16 +44,16 @@ CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
 	}
 
 	mvImagePyramid.resize(nlevels);
-	std::string s_cwd(getcwd(NULL,0));
+	//std::string s_cwd(getcwd(NULL,0));
   	//mFilename = s_cwd + "/Vocabulary/kitti_04_descriptors.dat";
   	//mFilename = s_cwd + "/Vocabulary/euroc_mh1_descriptors.dat";
   	//mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors.dat";
-  	mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors2.dat";
+  	//mFilename = s_cwd + "/Vocabulary/tum_fr1_xyz_descriptors2.dat";
 }
 
 //CNN specific
 void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputArray _mask,
-	std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors){
+	std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors, const std::string &descriptorFile){
 
 	if (_image.empty())
 		return;
@@ -69,9 +69,10 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 	_keypoints.clear();
 	_descriptors = cv::Mat();
 
-	std::ifstream f{ mFilename, std::ios::binary };
+
+	std::ifstream f{ descriptorFile, std::ios::binary };
 	if (!f) { //couldn't open the file
-		std::cout << "Can't open: " << mFilename << std::endl;
+		std::cout << "Can't open: " << descriptorFile << std::endl;
 		return;
 	}
 	
@@ -112,7 +113,7 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 		_keypoints.clear(); _descriptors = cv::Mat(); return;
 	}
 
-	std::ifstream f2{ mFilename, std::ios::binary };
+	std::ifstream f2{ descriptorFile, std::ios::binary };
 	if (!f2) { //couldn't open the file
 		return;
 	}
