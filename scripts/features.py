@@ -6,13 +6,27 @@ import math
 from PIL import ImageDraw, ImageOps
 
 
-CNN_INP_SZ = 224
-CNN_FM_SZ = 28
-CNN_FM_CNT = 512
-CNN_SCALE = CNN_INP_SZ / CNN_FM_SZ
+class CNN:
+    LAYER = 13
+    FM_SZ = 28
+    FM_CNT = 512
 
-REGION_CNT = 7
-REGION_SZ = int(CNN_FM_SZ / REGION_CNT)
+    INP_SZ = 224
+    SCALE = INP_SZ / FM_SZ
+    FM_BORDER = math.ceil(LAYER/SCALE)
+    BORDER = FM_BORDER * SCALE
+    FM_EFF_SZ = FM_SZ - 2*FM_BORDER
+    EFF_SZ = INP_SZ - 2*BORDER
+
+    @classmethod
+    def calc_parts(cls, size):
+        parts = math.ceil((size - 2*cls.BORDER) / cls.EFF_SZ)
+        padding = parts*cls.EFF_SZ + 2*cls.BORDER - size
+        return (parts, int(padding))
+
+
+REGION_CNT = 6
+REGION_SZ = int(CNN.FM_SZ / REGION_CNT)
 
 
 class Image:
@@ -22,30 +36,24 @@ class Image:
         self.width = img.width
         self.height = img.height
         self._orig = img
-        self.cols = math.ceil(img.width / CNN_INP_SZ)
-        self.rows = math.ceil(img.height / CNN_INP_SZ)
 
-        xpad = self.cols * CNN_INP_SZ - img.width
-        ypad = self.rows * CNN_INP_SZ - img.height
-        padded_img = ImageOps.expand(img, (0,0,xpad,ypad))
-        assert padded_img.size == (self.cols * CNN_INP_SZ, self.rows * CNN_INP_SZ), "Padded image size is incorrect"
+        self.cols,xpad = CNN.calc_parts(self.width)
+        self.rows,ypad = CNN.calc_parts(self.height)
+        self._padded_img = ImageOps.expand(img, (0,0,xpad,ypad))
+        assert self._padded_img.width == (self.cols*CNN.EFF_SZ + 2*CNN.BORDER), "Padded image width is incorrect"
+        assert self._padded_img.height == (self.rows*CNN.EFF_SZ + 2*CNN.BORDER), "Padded image height is incorrect"
 
-        self._parts = []
-        for r in range(self.rows):
-            rows = []
-            for c in range(self.cols):
-                x = c * CNN_INP_SZ
-                y = r * CNN_INP_SZ
-                assert x <= padded_img.width - CNN_INP_SZ, "x is out of range"
-                assert y <= padded_img.height - CNN_INP_SZ, "y is out of range"
-                subimage = padded_img.crop(box=(x,y,x+CNN_INP_SZ,y+CNN_INP_SZ))
-                rows.append(subimage)
-            assert len(rows) == self.cols, "Number of image cols is incorrect"
-            self._parts.append(rows)
-        assert len(self._parts) == self.rows, "Number of image rows is incorrect"
+    def part(self, row, col):
+        assert 0 <= row < self.rows, "Incorrect row"
+        assert 0 <= col < self.cols, "Incorrect col"
+        x = col * CNN.EFF_SZ
+        y = row * CNN.EFF_SZ
+        assert x <= self._padded_img.width - CNN.INP_SZ, "x is out of range"
+        assert y <= self._padded_img.height - CNN.INP_SZ, "y is out of range"
+        return self._padded_img.crop(box=(x,y,x+CNN.INP_SZ,y+CNN.INP_SZ))
 
-    def parts(self, row, col):
-        return self._parts[row][col]
+    def inside(self, x, y):
+        return CNN.BORDER <= x < self.width-CNN.BORDER and CNN.BORDER <= y < self.height-CNN.BORDER
 
     def draw_descriptors(self, descriptors):
         copy = self._orig.copy()
@@ -139,7 +147,7 @@ class FeatureDetector:
         self._model = Model(inputs=base.input, outputs=base.get_layer('block4_conv3').output)
 
     def produce_featuremaps(self, img):
-        assert img.size == (CNN_INP_SZ, CNN_INP_SZ), "Image size does not match CNN"
+        assert img.size == (CNN.INP_SZ, CNN.INP_SZ), "Image size does not match CNN"
 
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
@@ -152,10 +160,10 @@ class FeatureDetector:
         width = featuremaps.shape[1]
         height = featuremaps.shape[0]
         regions = []
-        for r in range(math.floor(height/REGION_SZ)):
-            for c in range(math.floor(width/REGION_SZ)):
-                rx = c*REGION_SZ
-                ry = r*REGION_SZ
+        for r in range(math.floor((height-2*CNN.FM_BORDER)/REGION_SZ)):
+            for c in range(math.floor((width-2*CNN.FM_BORDER)/REGION_SZ)):
+                rx = c*REGION_SZ + CNN.FM_BORDER
+                ry = r*REGION_SZ + CNN.FM_BORDER
                 if rx > img_sz[0] or ry > img_sz[1]:
                     continue
 
@@ -178,11 +186,32 @@ class FeatureDetector:
         for r in range(img.rows):
             col_fms = []
             for c in range(img.cols):
-                fm = self.produce_featuremaps(img.parts(r,c))
-                col_fms.append(fm)
+                fm = self.produce_featuremaps(img.part(r,c))
+                if r == 0:
+                    if c == 0:
+                        col_fms.append(fm[:-CNN.FM_BORDER, :-CNN.FM_BORDER])
+                    elif c == img.cols-1:
+                        col_fms.append(fm[:-CNN.FM_BORDER, CNN.FM_BORDER:])
+                    else:
+                        col_fms.append(fm[:-CNN.FM_BORDER, CNN.FM_BORDER:-CNN.FM_BORDER])
+                elif r == img.rows-1:
+                    if c == 0:
+                        col_fms.append(fm[CNN.FM_BORDER:, :-CNN.FM_BORDER])
+                    elif c == img.cols-1:
+                        col_fms.append(fm[CNN.FM_BORDER:, CNN.FM_BORDER:])
+                    else:
+                        col_fms.append(fm[CNN.FM_BORDER:, CNN.FM_BORDER:-CNN.FM_BORDER])
+                else:
+                    if c == 0:
+                        col_fms.append(fm[CNN.FM_BORDER:-CNN.FM_BORDER, :-CNN.FM_BORDER])
+                    elif c == img.cols-1:
+                        col_fms.append(fm[CNN.FM_BORDER:-CNN.FM_BORDER, CNN.FM_BORDER:])
+                    else:
+                        col_fms.append(fm[CNN.FM_BORDER:-CNN.FM_BORDER, CNN.FM_BORDER:-CNN.FM_BORDER])
+                # col_fms.append(fm[CNN.FM_BORDER:-CNN.FM_BORDER, CNN.FM_BORDER:-CNN.FM_BORDER])
             row_fms.append(np.hstack(col_fms))
         full_fm = np.vstack(row_fms)
-        assert full_fm.shape == (img.rows*CNN_FM_SZ, img.cols*CNN_FM_SZ, CNN_FM_CNT), "Unexpected feature maps shape"
+        # assert full_fm.shape == (img.rows*CNN.FM_EFF_SZ, img.cols*CNN.FM_EFF_SZ, CNN.FM_CNT), "Unexpected feature maps shape"
         return full_fm
 
     def detect(self, img):
@@ -194,9 +223,9 @@ class FeatureDetector:
         for region in regions:
             for kp in region.get_top_keypoints(self._kp_number):
                 x,y = refine_max(kp.x, kp.y, featuremaps[:,:,kp.fm])
-                x = int(x*CNN_SCALE + CNN_SCALE/2)
-                y = int(y*CNN_SCALE + CNN_SCALE/2)
-                if 0 <= x < img.width and 0 <= y < img.height:
+                x = int(x*CNN.SCALE + CNN.SCALE/2)
+                y = int(y*CNN.SCALE + CNN.SCALE/2)
+                if img.inside(x, y):
                     desc = featuremaps[kp.y,kp.x,:]
                     descriptors.append(KpDesc((x,y),desc,kp.fm))
 
