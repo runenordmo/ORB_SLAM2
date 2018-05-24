@@ -16,7 +16,7 @@ namespace ORB_SLAM2
 	public:
 
 		//CNN specific
-		CNNextractor(int nfeatures, float scaleFactor, int nlevels);
+		CNNextractor(int nfeatures, float scaleFactor, int nlevels, const std::string &descriptorFile);
 
 		~CNNextractor() {} 
 
@@ -24,7 +24,7 @@ namespace ORB_SLAM2
 		// Mask is ignored in the current implementation.
 		//CNN specific
 		void operator()(cv::InputArray _image, int frameNumber, cv::InputArray _mask,
-			std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors, const std::string &descriptorFile);
+			std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors);
 
 		int inline GetLevels() {
 			return nlevels;
@@ -66,7 +66,7 @@ namespace ORB_SLAM2
 		std::vector<float> mvInvLevelSigma2;
 
 		//CNN specific
-		std::string mFilename = "../Vocabulary/kitti_04_descriptors.dat";
+		std::string mFilename;
 		std::vector<uint64_t> mFrameIndexesInFile;
 	};
 

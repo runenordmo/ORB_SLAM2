@@ -58,9 +58,9 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight,const string &leftDescriptorFile, const string &rightDescriptorFile, const double &timeStamp, const int &frameNumber, CNNextractor* extractorLeft, CNNextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, const int &frameNumber, CNNextractor* extractorLeft, CNNextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
     :mpORBvocabulary(voc),mpCNNextractorLeft(extractorLeft),mpCNNextractorRight(extractorRight), mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
-     mpReferenceKF(static_cast<KeyFrame*>(NULL)), mDescriptorFile(leftDescriptorFile),mRightDescriptorFile(rightDescriptorFile)
+     mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
     // Frame ID
     mnId=nNextId++;
@@ -171,9 +171,9 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 }
 
 
-Frame::Frame(const cv::Mat &imGray, const string &descriptorFile, const double &timeStamp, const int &frameNumber, CNNextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+Frame::Frame(const cv::Mat &imGray, const double &timeStamp, const int &frameNumber, CNNextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
     :mpORBvocabulary(voc),mpCNNextractorLeft(extractor),mpCNNextractorRight(static_cast<CNNextractor*>(NULL)),
-     mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),mDescriptorFile(descriptorFile)
+     mTimeStamp(timeStamp), mFrameNumber(frameNumber), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
     // Frame ID
     mnId=nNextId++;
@@ -247,9 +247,9 @@ void Frame::AssignFeaturesToGrid()
 void Frame::ExtractORB(int flag, const cv::Mat &im)
 {
     if(flag==0)
-        (*mpCNNextractorLeft)(im,mFrameNumber,cv::Mat(),mvKeys,mDescriptors,mDescriptorFile);
+        (*mpCNNextractorLeft)(im,mFrameNumber,cv::Mat(),mvKeys,mDescriptors);
     else
-        (*mpCNNextractorRight)(im,mFrameNumber,cv::Mat(),mvKeysRight,mDescriptorsRight,mRightDescriptorFile);
+        (*mpCNNextractorRight)(im,mFrameNumber,cv::Mat(),mvKeysRight,mDescriptorsRight);
 }
 
 void Frame::SetPose(cv::Mat Tcw)
@@ -506,7 +506,7 @@ void Frame::ComputeStereoMatches()
     for(int iL=0; iL<N; iL++)
     {
         const cv::KeyPoint &kpL = mvKeys[iL];
-        const int &levelL = kpL.octave;
+        //const int &levelL = kpL.octave;
         const float &vL = kpL.pt.y;
         const float &uL = kpL.pt.x;
 
@@ -529,8 +529,8 @@ void Frame::ComputeStereoMatches()
             const size_t iR = vCandidates[iC];
             const cv::KeyPoint &kpR = mvKeysRight[iR];
 
-            if(kpR.octave<levelL-1 || kpR.octave>levelL+1)
-                continue;
+            //if(kpR.octave<levelL-1 || kpR.octave>levelL+1)
+            //    continue;
 
             const float &uR = kpR.pt.x;
 
@@ -553,7 +553,7 @@ void Frame::ComputeStereoMatches()
             
             // coordinates in image pyramid at keypoint scale
             const float uR0 = mvKeysRight[bestIdxR].pt.x;
-            const float scaleFactor = mvInvScaleFactors[0];
+            const float scaleFactor = mvInvScaleFactors[0]; // default: kpL.octave
             const float scaleduL = round(kpL.pt.x*scaleFactor);
             const float scaledvL = round(kpL.pt.y*scaleFactor);
             const float scaleduR0 = round(uR0*scaleFactor);
@@ -564,7 +564,7 @@ void Frame::ComputeStereoMatches()
                 continue;
             if (scaleduL-w < 0 || scaleduL+w+1 >= nCols)
                 continue;
-
+                                            // default: kpL.octave
             cv::Mat IL = mpCNNextractorLeft->mvImagePyramid[0].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
             IL.convertTo(IL,CV_32F);
             IL = IL - IL.at<float>(w,w) *cv::Mat::ones(IL.rows,IL.cols,CV_32F);
@@ -574,13 +574,13 @@ void Frame::ComputeStereoMatches()
             vector<double> vDists;
             vDists.resize(2*L+1);
 
-            const float iniu = scaleduR0-L-w;
+            const float iniu = scaleduR0-L-w; // default: +L-w
             const float endu = scaleduR0+L+w+1;
             if(iniu<0 || endu >= nCols)
                 continue;
 
             for(int incR=-L; incR<=+L; incR++)
-            {   
+            {                                  // default: kpL.octave
                 cv::Mat IR = mpCNNextractorRight->mvImagePyramid[0].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
                 IR.convertTo(IR,CV_32F);
                 IR = IR - IR.at<float>(w,w) *cv::Mat::ones(IR.rows,IR.cols,CV_32F);
@@ -636,8 +636,20 @@ void Frame::ComputeStereoMatches()
             mvDepth[vDistIdx[i].second]=-1;
         }
     }
-}
+    //cv::namedWindow("ORB-SLAM2: Current Frame");
+    //cv::Mat im;
+    //mImGray.copyTo(mIm);
+    //for(int iL=0; iL<N; iL++)
+    //{
+    //    cv::circle(im,mvKeys[iL].pt,2,cv::Scalar(255,0,0),-1);
+    //}
+    //
+    //cv::imshow("ORB-SLAM2: Debug Frame",im);
+    //cv::waitKey(1000/30);
+    //cout << endl << "Press enter to continue" << endl;
+    //getchar();
 
+}
 
 void Frame::ComputeStereoFromRGBD(const cv::Mat &imDepth)
 {

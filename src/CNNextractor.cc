@@ -19,11 +19,11 @@ using namespace std;
 
 namespace ORB_SLAM2
 {
-	const int EDGE_THRESHOLD = 19;
+	const int EDGE_THRESHOLD = 12;
 	const int CNN_DESCRIPTOR_SIZE = 256;
 
-	CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
-		nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels)
+	CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels, const std::string &descriptorFile) :
+		nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels), mFilename(descriptorFile)
 	{
 		mvScaleFactor.resize(nlevels);
 		mvLevelSigma2.resize(nlevels);
@@ -53,7 +53,7 @@ namespace ORB_SLAM2
 
 	//CNN specific
 	void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputArray _mask,
-		std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors, const std::string &descriptorFile) {
+		std::vector<cv::KeyPoint>& _keypoints, cv::Mat & _descriptors) {
 
 		if (_image.empty())
 			return;
@@ -70,9 +70,9 @@ namespace ORB_SLAM2
 		_descriptors = cv::Mat();
 
 
-		std::ifstream f{ descriptorFile, std::ios::binary };
+		std::ifstream f{ mFilename, std::ios::binary };
 		if (!f) {
-			std::cout << "Can't open: " << descriptorFile << std::endl;
+			std::cout << "Can't open: " << mFilename << std::endl;
 			return;
 		}
 
@@ -120,9 +120,9 @@ namespace ORB_SLAM2
 
 		//At this point, mFrameIndexesInFile is not empty
 		//Read features from the appropriate frame
-		std::ifstream f2{ descriptorFile, std::ios::binary };
+		std::ifstream f2{ mFilename, std::ios::binary };
 		if (!f2) {
-			std::cout << "Can't open: " << descriptorFile << std::endl;
+			std::cout << "Can't open: " << mFilename << std::endl;
 			return;
 		}
 

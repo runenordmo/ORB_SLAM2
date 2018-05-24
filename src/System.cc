@@ -36,7 +36,9 @@ namespace ORB_SLAM2
 {
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
+               const bool bUseViewer,const std::string &descriptorFile, 
+               const std::string &descriptorFileRight):mSensor(sensor), 
+        mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
         mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
@@ -108,7 +110,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor,
+                             descriptorFile, descriptorFileRight);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
@@ -141,7 +144,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser->SetLocalMapper(mpLocalMapper);
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const string &leftDescriptorFile, const string &rightDescriptorFile, const double &timestamp, const int &frameNumber)
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=STEREO)
     {
@@ -183,7 +186,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,leftDescriptorFile,rightDescriptorFile,timestamp,frameNumber);
+    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
@@ -243,7 +246,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return Tcw;
 }
 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const string &descriptorFile, const double &timestamp, const int &frameNumber)
+cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -285,7 +288,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const string &descriptorFile, 
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,descriptorFile,timestamp,frameNumber);
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
