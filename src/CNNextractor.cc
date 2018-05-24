@@ -94,7 +94,14 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 				//Read descriptor, abort if reading goes wrong
 				std::array<float, CNN_DESCRIPTOR_SIZE> dummyDesc;
 				f.read(reinterpret_cast<char *>(&dummyDesc), sizeof(dummyDesc));
-				if (!f) { mFrameIndexesInFile.clear(); _keypoints.clear(); _descriptors = cv::Mat(); f.close(); return; }
+				if (!f) 
+					{ 
+						mFrameIndexesInFile.clear(); 
+						_keypoints.clear(); 
+						_descriptors = cv::Mat(); 
+						f.close(); 
+						return; 
+					}
 			}
 			else{
 				mFrameIndexesInFile.push_back(f.tellg());
@@ -129,22 +136,45 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 		cv::Point pt;
 		f2.read(reinterpret_cast<char*>(&pt.x), sizeof(std::int32_t));
 		f2.read(reinterpret_cast<char*>(&pt.y), sizeof(std::int32_t));
-		if (f2.eof()) { _keypoints.clear();  _descriptors = cv::Mat(); f2.close(); return; }
-		if (!f2) { _keypoints.clear(); _descriptors = cv::Mat(); f2.close(); return; }
+		if (f2.eof())
+		{ 
+			_keypoints.clear();
+			_descriptors = cv::Mat();
+			f2.close();
+			std::cout << "Error: end of file at frame: " << frameNumber <<endl;
+			return;
+		}
+		if (!f2) 
+		{ 
+			_keypoints.clear();
+			_descriptors = cv::Mat();
+			f2.close();
+			std::cout << "Error reading keyPoint at frame: " << frameNumber <<endl;
+			return;
+		}
 
 		bool last_feature_in_frame = (pt.x == -1 && pt.y == -1);
 		if (!last_feature_in_frame) {
 			//Read descriptor, abort if reading goes wrong
 			f2.read(reinterpret_cast<char *>(&desc), sizeof(desc));
-			if (!f2) { _keypoints.clear();  _descriptors = cv::Mat(); f2.close(); return; }
+			if (!f2)
+			{ 
+				_keypoints.clear();
+				_descriptors = cv::Mat();
+				f2.close();
+				std::cout << "Error reading descriptor at frame: " << frameNumber <<endl;
+				return;
+			}
 			
 			//Save keypoint and descriptor
 			keyP.pt = pt;
 			_keypoints.push_back(keyP);
 			_descriptors.push_back(cv::Mat(desc, true).reshape(1, 1));
 		}
-		else { //ready to return the features!
-			f2.close(); return;
+		else
+		{ //ready to return the features!
+			f2.close();
+			return;
 		}	
 	}
 }
