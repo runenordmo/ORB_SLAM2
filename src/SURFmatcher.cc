@@ -27,8 +27,8 @@ namespace ORB_SLAM2
     //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
 
 
-const double SURFmatcher::TH_HIGH = 4000;
-const double SURFmatcher::TH_LOW = 2000;
+const double SURFmatcher::TH_HIGH = 16000;
+const double SURFmatcher::TH_LOW = 4000;
 const int SURFmatcher::HISTO_LENGTH = 30;
 
 
