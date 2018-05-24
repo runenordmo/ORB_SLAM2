@@ -643,8 +643,13 @@ void LocalMapping::KeyFrameCulling()
         if(pKF->mnId==0)
             continue;
         const vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
+        
+        int nObs;
+        if(mbMonocular)
+            nObs = 5;
+        else
+            nObs = 3;
 
-        int nObs = 5;
         const int thObs=nObs;
         int nRedundantObservations=0;
         int nMPs=0;
