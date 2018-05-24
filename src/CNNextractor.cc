@@ -20,7 +20,7 @@ using namespace std;
 namespace ORB_SLAM2
 {
 const int EDGE_THRESHOLD = 19;
-const int CNN_DESCRIPTOR_SIZE = 512;
+const int CNN_DESCRIPTOR_SIZE = 256;
 
 CNNextractor::CNNextractor(int _nfeatures, float _scaleFactor, int _nlevels) :
 	nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels)
@@ -123,7 +123,7 @@ void CNNextractor::operator()(cv::InputArray _image, int frameNumber, cv::InputA
 	while (true) {
 		//Set up variables to save keypoint and descriptor in
 		cv::KeyPoint keyP(0, 0, 1, -1, 0, 1, -1); //check the parameters once more?
-		std::array<float, 512> desc;
+		std::array<float, CNN_DESCRIPTOR_SIZE> desc;
 
 		//Read first two coordinates, abort if reading goes wrong
 		cv::Point pt;

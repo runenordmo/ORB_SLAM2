@@ -45,10 +45,10 @@ int main(int argc, char **argv) {
   cout << "BoW load/save benchmark" << endl;
   ORB_SLAM2::ORBVocabulary* voc = new ORB_SLAM2::ORBVocabulary();
 
-  load_as_text(voc, "cnn_voc.txt");
-  save_as_binary(voc, "cnn_voc.bin");
-  load_as_binary(voc, "cnn_voc.bin");
-  save_as_binary(voc, "cnn_voc.bin");
+  load_as_text(voc, "cnn_voc256.txt");
+  save_as_binary(voc, "cnn_voc256.bin");
+  load_as_binary(voc, "cnn_voc256.bin");
+  save_as_binary(voc, "cnn_voc256.bin");
 
 
   return 0;
