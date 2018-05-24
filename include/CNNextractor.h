@@ -50,24 +50,24 @@ namespace ORB_SLAM2
 			return mvInvLevelSigma2;
 		}
 
-		std::vector<cv::Mat> mvImagePyramid; 
+		std::vector<cv::Mat> mvImagePyramid;
 
 	protected:
 
-		void ComputePyramid(cv::Mat image); 
+		void ComputePyramid(cv::Mat image);
 
-		int nfeatures; 
-		double scaleFactor; 
-		int nlevels; 
+		int nfeatures;
+		double scaleFactor;
+		int nlevels;
 
-		std::vector<float> mvScaleFactor; 
-		std::vector<float> mvInvScaleFactor; 
-		std::vector<float> mvLevelSigma2; 
-		std::vector<float> mvInvLevelSigma2; 
+		std::vector<float> mvScaleFactor;
+		std::vector<float> mvInvScaleFactor;
+		std::vector<float> mvLevelSigma2;
+		std::vector<float> mvInvLevelSigma2;
 
 		//CNN specific
 		std::string mFilename = "../Vocabulary/kitti_04_descriptors.dat";
-		std::vector<int> mFrameIndexesInFile;
+		std::vector<uint64_t> mFrameIndexesInFile;
 	};
 
 } //namespace ORB_SLAM
