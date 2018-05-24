@@ -50,7 +50,7 @@ public:
     void Update(Tracking *pTracker);
 
     // Draw last processed frame.
-    cv::Mat DrawFrame();
+    cv::Mat DrawFrame(bool menuDebug);
 
 protected:
 

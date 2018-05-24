@@ -40,7 +40,7 @@ FrameDrawer::FrameDrawer(Map* pMap):mpMap(pMap)
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
 }
 
-cv::Mat FrameDrawer::DrawFrame()
+cv::Mat FrameDrawer::DrawFrame(bool menuDebug)
 {
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
@@ -80,6 +80,7 @@ cv::Mat FrameDrawer::DrawFrame()
         cvtColor(im,im,CV_GRAY2BGR);
 
     //Draw
+
     if(state==Tracking::NOT_INITIALIZED) //INITIALIZING
     {   
         nIniMatches = 0;
@@ -96,6 +97,14 @@ cv::Mat FrameDrawer::DrawFrame()
                 cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
         }        
     }
+    else if(menuDebug)
+    {
+        for(unsigned int i=0; i<vCurrentKeys.size(); i++)
+        {
+            cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,0,0),-1);
+        }
+    }
+
     else if(state==Tracking::OK) //TRACKING
     {
         mnTracked=0;
