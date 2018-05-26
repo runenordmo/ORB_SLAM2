@@ -41,7 +41,7 @@ parser.add_argument("-o", "--output", help="path to store output files", default
 parser.add_argument("-f", "--file", help="name of descriptors file", default="descriptors.dat")
 parser.add_argument("-e", "--ext", help="extension of the image files", default=".png")
 parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=500)
-parser.add_argument("-n", "--number", help="number of keypoints per region", type=int, default=3)
+parser.add_argument("-n", "--number", help="number of keypoints per region", type=int, default=1000)
 parser.add_argument("-d", "--debug", help="saves a debug image", action="store_true")
 args = parser.parse_args()
 

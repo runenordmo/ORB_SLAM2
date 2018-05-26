@@ -65,16 +65,20 @@ def create_fm_images(detector, img, output, number):
         except OSError as e:
             print("Error: %s - %s." % (e.filename,e.strerror))
 
-    regions = detector.create_regions(fms, img.size)
-    for region in regions:
-        for kp in region.get_top_keypoints(number):
-            x,y = refine_max(kp.x, kp.y, fms[:,:,kp.fm])
-            x = int(x*CNN.SCALE + CNN.SCALE/2)
-            y = int(y*CNN.SCALE + CNN.SCALE/2)
-            if img.inside(x, y):
-                draw = ImageDraw.Draw(images[kp.fm])
-                d = KpDesc((x,y),None,kp.fm)
-                draw.ellipse((x-2,y-2,x+2,y+2), outline=d.color())
+    keypoints = detector.find_keypoints(fms)
+    i = 0
+    for kp in keypoints.get_sorted_keypoints():
+        x,y = refine_max(kp.x, kp.y, fms[:,:,kp.fm])
+        x = int(x*CNN.SCALE + CNN.SCALE/2)
+        y = int(y*CNN.SCALE + CNN.SCALE/2)
+        if img.inside(x, y):
+            draw = ImageDraw.Draw(images[kp.fm])
+            d = KpDesc((x,y),None,kp.fm)
+            draw.ellipse((x-2,y-2,x+2,y+2), outline=d.color())
+            i = i+1
+            if i == 1000:
+                break
+
     
     return images
 
@@ -84,7 +88,7 @@ def main():
     parser.add_argument("images", help="images to match", metavar="IMG", nargs=2)
     parser.add_argument("-o", "--output", help="path to store output file", default="output/")
     parser.add_argument("-t", "--threshold", help="feature threshold", type=int, default=500)
-    parser.add_argument("-n", "--number", help="number of keypoints per region", type=int, default=3)
+    parser.add_argument("-n", "--number", help="number of keypoints per region", type=int, default=1000)
     parser.add_argument("-l", "--lines", help="suppress drawing match lines", action="store_false")
     args = parser.parse_args()
     assert args.output.endswith('/'), "output must end with '/'"
