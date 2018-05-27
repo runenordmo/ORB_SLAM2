@@ -27,10 +27,10 @@ namespace ORB_SLAM2
     //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
 
 
-const double SURFmatcher::TH_HIGH = 16000;
-const double SURFmatcher::TH_LOW = 7500;
+const double SURFmatcher::TH_HIGH = 11000;
+const double SURFmatcher::TH_LOW = 4000;
 const int SURFmatcher::HISTO_LENGTH = 30;
-const bool mbCheckMutualNN = true;
+const bool mbCheckMutualNN = false;
 
 
 SURFmatcher::SURFmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
