@@ -28,8 +28,9 @@ namespace ORB_SLAM2
 
 
 const double SURFmatcher::TH_HIGH = 16000;
-const double SURFmatcher::TH_LOW = 4000;
+const double SURFmatcher::TH_LOW = 7500;
 const int SURFmatcher::HISTO_LENGTH = 30;
+const bool mbCheckMutualNN = true;
 
 
 SURFmatcher::SURFmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
@@ -253,7 +254,6 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
             Fit = F.mFeatVec.lower_bound(KFit->first);
         }
     }
-
 
     if(mbCheckOrientation)
     {
@@ -1326,6 +1326,9 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame,
         rotHist[i].reserve(500);
     const float factor = 1.0f/HISTO_LENGTH;
 
+    // Keep track of new matches (to check for mutual NN)
+    vector<int> vMatchedIndices2;
+
     const cv::Mat Rcw = CurrentFrame.mTcw.rowRange(0,3).colRange(0,3);
     const cv::Mat tcw = CurrentFrame.mTcw.rowRange(0,3).col(3);
 
@@ -1430,10 +1433,78 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame,
                         assert(bin>=0 && bin<HISTO_LENGTH);
                         rotHist[bin].push_back(bestIdx2);
                     }
+                    if(mbCheckMutualNN){
+                        vMatchedIndices2.push_back(bestIdx2);
+                    }
                 }
             }
         }
     }
+    //cout << "nMatches: " << nmatches <<endl;
+    if (mbCheckMutualNN)
+    {
+        // For every match previously found going 
+        // from LastFrame (1) to CurrentFrame (2)
+
+        for(int i=0; i<vMatchedIndices2.size(); i++)
+        {
+            int currentFrameIdx = vMatchedIndices2[i];
+            MapPoint* pBest12MatchedMP = CurrentFrame.mvpMapPoints[currentFrameIdx];
+            if(!pBest12MatchedMP) // should never happen
+                continue;
+
+            int nCurrentOctave = CurrentFrame.mvKeys[i].octave;
+
+            // Search in a window. Size depends on scale. EDIT: Assumed all 
+            // features extracted from same scale.
+
+            float radius = th*LastFrame.mvScaleFactors[nCurrentOctave];
+
+            vector<size_t> vIndices2;
+
+            cv::KeyPoint bestMatchedKP = CurrentFrame.mvKeysUn[currentFrameIdx];
+
+            vector<size_t> vIndices1 = LastFrame.GetFeaturesInArea(bestMatchedKP.pt.x,bestMatchedKP.pt.y, radius, nCurrentOctave);
+            
+            if(vIndices1.empty())
+                continue;
+
+            const cv::Mat dMP = pBest12MatchedMP->GetDescriptor();
+
+            double bestDist = DBL_MAX;
+            int bestIdx1 = -1;
+
+            // Find best match going 
+            // from CurrentFrame (2) to LastFrame (1)
+
+            for(vector<size_t>::const_iterator vit=vIndices1.begin(), vend=vIndices1.end(); vit!=vend; vit++)
+            {
+                const size_t i1 = *vit;
+                //if(LastFrame.mvpMapPoints[i1])
+                //    if(LastFrame.mvpMapPoints[i1]->Observations()>0)
+                //        continue;
+
+                const cv::Mat &d = LastFrame.mDescriptors.row(i1);
+
+                const double dist = DescriptorDistance(dMP,d);
+
+                if(dist<bestDist)
+                {
+                    bestDist=dist;
+                    bestIdx1=i1;
+                }
+            }
+            // Discard matches which are not
+            // bestMatches in both directions
+            if (LastFrame.mvpMapPoints[bestIdx1] != pBest12MatchedMP)
+            {
+                //cout << "Bad" << endl;
+                CurrentFrame.mvpMapPoints[currentFrameIdx] = static_cast<MapPoint*>(NULL);
+                nmatches--;
+            }
+        }
+    }
+    //cout << "nAfterMatches: " << nmatches <<endl;
 
     //Apply rotation consistency
     if(mbCheckOrientation)

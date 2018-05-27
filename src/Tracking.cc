@@ -317,6 +317,7 @@ void Tracking::Track()
             }
             else
             {
+                //cout << "Lost tracking at frame " << mCurrentFrame.mFrameNumber<<endl;
                 bOK = Relocalization();
             }
         }
