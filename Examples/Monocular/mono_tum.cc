@@ -35,9 +35,14 @@ void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
 
 int main(int argc, char **argv)
 {
-    if(argc != 5)
+    if(argc != 6)
     {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence path_to_descriptor_file" << endl;
+        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence path_to_descriptor_file visualize(true || false)" << endl;
+		return 1;
+    }
+    if(string(argv[5]) != "true" && string(argv[5]) != "false")
+    {
+        cerr << endl << "Usage: arg 5: visualize (true || false)" << endl;
         return 1;
     }
 
@@ -50,7 +55,7 @@ int main(int argc, char **argv)
     int nImages = vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true,string(argv[4]),"noRightDescriptorFile");
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,string(argv[5]) == "true",string(argv[4]),"noRightDescriptorFile");
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;

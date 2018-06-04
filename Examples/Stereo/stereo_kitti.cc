@@ -36,9 +36,14 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
 
 int main(int argc, char **argv)
 {
-    if(argc != 6)
+    if(argc != 7)
     {
-        cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_sequence path_to_left_descriptors path_to_right_descriptors" << endl;
+        cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_sequence path_to_left_descriptors path_to_right_descriptors visualize(true || false)" << endl;
+        return 1;
+    }
+    if(string(argv[6]) != "true" && string(argv[6]) != "false")
+    {
+        cerr << endl << "Usage: arg 6: visualize (true || false)" << endl;
         return 1;
     }
 
@@ -51,7 +56,7 @@ int main(int argc, char **argv)
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true,string(argv[4]),string(argv[5]));
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,string(argv[6]) == "true",string(argv[4]),string(argv[5]));
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
