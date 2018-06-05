@@ -68,7 +68,6 @@ src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
-src/SURFextractor.cc
 src/CNNmatcher.cc 
 src/CNNextractor.cc)
 

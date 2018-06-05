@@ -32,11 +32,6 @@ namespace ORB_SLAM2
 typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
   ORBVocabulary;
 
-//typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
-//  CNNVocabulary;
-//typedef DBoW2::TemplatedVocabulary<DBoW2::FSurf64::TDescriptor, DBoW2::FSurf64>
-//  SURFVocabulary;
-
 } //namespace ORB_SLAM
 
 #endif // ORBVOCABULARY_H

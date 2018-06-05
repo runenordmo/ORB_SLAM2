@@ -2,7 +2,7 @@
  * File: FCNN.h
  * Date: November 2011
  * Author: Dorian Galvez-Lopez
- * Description: functions for Surf64 descriptors
+ * Description: functions for CNN descriptors
  * License: see the LICENSE.txt file
  *
  */
@@ -18,7 +18,7 @@
 
 namespace DBoW2 {
 
-/// Functions to manipulate SURF64 descriptors
+/// Functions to manipulate CNN descriptors
 class FCNN: protected FClass
 {
 public:

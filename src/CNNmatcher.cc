@@ -1531,7 +1531,7 @@ int CNNmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
     return nmatches;
 }
 
-int CNNmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const double SURFdist)
+int CNNmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const double CNNdist)
 {
     int nmatches = 0;
 
@@ -1614,7 +1614,7 @@ int CNNmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set
                     }
                 }
 
-                if(bestDist<=SURFdist)
+                if(bestDist<=CNNdist)
                 {
                     CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
                     nmatches++;

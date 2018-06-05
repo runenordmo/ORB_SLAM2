@@ -2,8 +2,8 @@
 // Created by rune on 08.04.18.
 //
 
-#ifndef SURFMATCHER_H
-#define SURFMATCHER_H
+#ifndef CNNMATCHER_H
+#define CNNMATCHER_H
 
 #include<vector>
 #include<opencv2/core/core.hpp>
@@ -20,7 +20,7 @@ public:
 
     CNNmatcher(float nnratio=0.6, bool checkOri=false);
 
-    // Computes the euclidean distance between two SURF descriptors
+    // Computes the euclidean distance between two CNN descriptors
     static double DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
 
     static const double TH_LOW;
@@ -82,4 +82,4 @@ protected:
 
 } //namespace ORB_SLAM
 
-#endif // SURFMATCHER_H
+#endif // CNNMATCHER_H
