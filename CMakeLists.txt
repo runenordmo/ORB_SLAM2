@@ -69,7 +69,7 @@ src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
 src/SURFextractor.cc
-src/SURFmatcher.cc 
+src/CNNmatcher.cc 
 src/CNNextractor.cc)
 
 if(APPLE)

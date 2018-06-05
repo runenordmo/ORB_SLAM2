@@ -23,7 +23,7 @@
 #include "Thirdparty/DBoW2/DUtils/Random.h"
 
 #include "Optimizer.h"
-#include "SURFmatcher.h"
+#include "CNNmatcher.h"
 
 #include<thread>
 

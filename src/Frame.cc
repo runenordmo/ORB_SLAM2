@@ -20,7 +20,7 @@
 
 #include "Frame.h"
 #include "Converter.h"
-#include "SURFmatcher.h"
+#include "CNNmatcher.h"
 #include <thread>
 
 namespace ORB_SLAM2
@@ -469,7 +469,7 @@ void Frame::ComputeStereoMatches()
     mvuRight = vector<float>(N,-1.0f);
     mvDepth = vector<float>(N,-1.0f);
 
-    const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
+    const double thOrbDist = (CNNmatcher::TH_HIGH+CNNmatcher::TH_LOW)/2;
 
     const int nRows = mpCNNextractorLeft->mvImagePyramid[0].rows;
     const int nCols = mpCNNextractorLeft->mvImagePyramid[0].cols;
@@ -519,7 +519,7 @@ void Frame::ComputeStereoMatches()
 
         if(maxU<0)
             continue;
-        double bestDist = SURFmatcher::TH_HIGH;
+        double bestDist = CNNmatcher::TH_HIGH;
         size_t bestIdxR = 0;
 
         const cv::Mat &dL = mDescriptors.row(iL);
@@ -537,7 +537,7 @@ void Frame::ComputeStereoMatches()
             if(uR>=minU && uR<=maxU)
             {
                 const cv::Mat &dR = mDescriptorsRight.row(iR);
-                const double dist = SURFmatcher::DescriptorDistance(dL,dR);
+                const double dist = CNNmatcher::DescriptorDistance(dL,dR);
 
                 if(dist<bestDist)
                 {

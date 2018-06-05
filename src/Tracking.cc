@@ -24,7 +24,7 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
-#include"SURFmatcher.h"
+#include"CNNmatcher.h"
 #include"FrameDrawer.h"
 #include"Converter.h"
 #include"Map.h"
@@ -597,7 +597,7 @@ void Tracking::MonocularInitialization()
         }
 
         // Find correspondences
-        SURFmatcher matcher(0.9,false);
+        CNNmatcher matcher(0.9,false);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
         // Check if there are enough correspondences
@@ -763,7 +763,7 @@ bool Tracking::TrackReferenceKeyFrame()
 
     // We perform first an ORB matching with the reference keyframe
     // If enough matches are found we setup a PnP solver
-    SURFmatcher matcher(0.7,false);
+    CNNmatcher matcher(0.7,false);
     vector<MapPoint*> vpMapPointMatches;
 
     int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);
@@ -868,7 +868,7 @@ void Tracking::UpdateLastFrame()
 
 bool Tracking::TrackWithMotionModel()
 {
-    SURFmatcher matcher(0.9,false);
+    CNNmatcher matcher(0.9,false);
 
     // Update last frame pose according to its reference keyframe
     // Create "visual odometry" points if in Localization Mode
@@ -1183,7 +1183,7 @@ void Tracking::SearchLocalPoints()
 
     if(nToMatch>0)
     {
-        SURFmatcher matcher(0.8,false);
+        CNNmatcher matcher(0.8,false);
         int th = 1;
         if(mSensor==System::RGBD)
             th=3;
@@ -1356,7 +1356,7 @@ bool Tracking::Relocalization()
 
     // We perform first an ORB matching with each candidate
     // If enough matches are found we setup a PnP solver
-    SURFmatcher matcher(0.75,false);
+    CNNmatcher matcher(0.75,false);
 
     vector<PnPsolver*> vpPnPsolvers;
     vpPnPsolvers.resize(nKFs);
@@ -1396,7 +1396,7 @@ bool Tracking::Relocalization()
     // Alternatively perform some iterations of P4P RANSAC
     // Until we found a camera pose supported by enough inliers
     bool bMatch = false;
-    SURFmatcher matcher2(0.9,true);
+    CNNmatcher matcher2(0.9,true);
 
     while(nCandidates>0 && !bMatch)
     {

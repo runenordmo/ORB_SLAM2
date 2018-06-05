@@ -20,7 +20,7 @@
 
 #include "KeyFrame.h"
 #include "Converter.h"
-#include "SURFmatcher.h"
+#include "CNNmatcher.h"
 #include<mutex>
 
 namespace ORB_SLAM2

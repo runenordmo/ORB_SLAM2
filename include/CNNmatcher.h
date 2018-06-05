@@ -15,10 +15,10 @@
 
 namespace ORB_SLAM2{
 
-class SURFmatcher {
+class CNNmatcher {
 public:
 
-    SURFmatcher(float nnratio=0.6, bool checkOri=false);
+    CNNmatcher(float nnratio=0.6, bool checkOri=false);
 
     // Computes the euclidean distance between two SURF descriptors
     static double DescriptorDistance(const cv::Mat &a, const cv::Mat &b);

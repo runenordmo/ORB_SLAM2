@@ -19,7 +19,7 @@
 */
 
 #include "MapPoint.h"
-#include "SURFmatcher.h"
+#include "CNNmatcher.h"
 
 #include<mutex>
 
@@ -278,7 +278,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
         Distances[i][i]=0;
         for(size_t j=i+1;j<N;j++)
         {
-            double distij = SURFmatcher::DescriptorDistance(vDescriptors[i],vDescriptors[j]);
+            double distij = CNNmatcher::DescriptorDistance(vDescriptors[i],vDescriptors[j]);
             Distances[i][j]=distij;
             Distances[j][i]=distij;
         }

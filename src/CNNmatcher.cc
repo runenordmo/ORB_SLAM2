@@ -2,7 +2,7 @@
 // Created by rune on 08.04.18.
 //
 
-#include "SURFmatcher.h"
+#include "CNNmatcher.h"
 
 #include<limits.h>
 
@@ -24,20 +24,20 @@ namespace ORB_SLAM2
 // TODO: Set thresholds    
 // Min and max threshold for distance between two features
     //sometime used as:
-    //const double thOrbDist = (SURFmatcher::TH_HIGH+SURFmatcher::TH_LOW)/2;
+    //const double thOrbDist = (CNNmatcher::TH_HIGH+CNNmatcher::TH_LOW)/2;
 
 
-const double SURFmatcher::TH_HIGH = 11000;
-const double SURFmatcher::TH_LOW = 4000;
-const int SURFmatcher::HISTO_LENGTH = 30;
+const double CNNmatcher::TH_HIGH = 11000;
+const double CNNmatcher::TH_LOW = 4000;
+const int CNNmatcher::HISTO_LENGTH = 30;
 const bool mbCheckMutualNN = false;
 
 
-SURFmatcher::SURFmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
+CNNmatcher::CNNmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
 {
 }
 
-int SURFmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoints, const float th)
+int CNNmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoints, const float th)
 {
     int nmatches=0;
 
@@ -123,7 +123,7 @@ int SURFmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoin
     return nmatches;
 }
 
-float SURFmatcher::RadiusByViewingCos(const float &viewCos)
+float CNNmatcher::RadiusByViewingCos(const float &viewCos)
 {
     if(viewCos>0.998)
         return 2.5;
@@ -132,7 +132,7 @@ float SURFmatcher::RadiusByViewingCos(const float &viewCos)
 }
 
 
-bool SURFmatcher::CheckDistEpipolarLine(const cv::KeyPoint &kp1,const cv::KeyPoint &kp2,const cv::Mat &F12,const KeyFrame* pKF2)
+bool CNNmatcher::CheckDistEpipolarLine(const cv::KeyPoint &kp1,const cv::KeyPoint &kp2,const cv::Mat &F12,const KeyFrame* pKF2)
 {
     // Epipolar line in second image l = x1'F12 = [a b c]
     const float a = kp1.pt.x*F12.at<float>(0,0)+kp1.pt.y*F12.at<float>(1,0)+F12.at<float>(2,0);
@@ -151,7 +151,7 @@ bool SURFmatcher::CheckDistEpipolarLine(const cv::KeyPoint &kp1,const cv::KeyPoi
     return dsqr<3.84*pKF2->mvLevelSigma2[kp2.octave];
 }
 
-int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPointMatches)
+int CNNmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPointMatches)
 {
     const vector<MapPoint*> vpMapPointsKF = pKF->GetMapPointMatches();
 
@@ -278,7 +278,7 @@ int SURFmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoi
     return nmatches;
 }
 
-int SURFmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapPoint*> &vpPoints, vector<MapPoint*> &vpMatched, int th)
+int CNNmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapPoint*> &vpPoints, vector<MapPoint*> &vpMatched, int th)
 {
     // Get Calibration Parameters for later projection
     const float &fx = pKF->fx;
@@ -393,7 +393,7 @@ int SURFmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<Map
     return nmatches;
 }
 
-int SURFmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f> &vbPrevMatched, vector<int> &vnMatches12, int windowSize)
+int CNNmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f> &vbPrevMatched, vector<int> &vnMatches12, int windowSize)
 {
     int nmatches=0;
     vnMatches12 = vector<int>(F1.mvKeysUn.size(),-1);
@@ -510,7 +510,7 @@ int SURFmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2
     return nmatches;
 }
 
-int SURFmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12)
+int CNNmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12)
 {
     const vector<cv::KeyPoint> &vKeysUn1 = pKF1->mvKeysUn;
     const DBoW2::FeatureVector &vFeatVec1 = pKF1->mFeatVec;
@@ -645,7 +645,7 @@ int SURFmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> 
     return nmatches;
 }
 
-int SURFmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F12,
+int CNNmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F12,
                                        vector<pair<size_t, size_t> > &vMatchedPairs, const bool bOnlyStereo)
 {    
     const DBoW2::FeatureVector &vFeatVec1 = pKF1->mFeatVec;
@@ -813,7 +813,7 @@ int SURFmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat 
     return nmatches;
 }
 
-int SURFmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const float th)
+int CNNmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const float th)
 {
     cv::Mat Rcw = pKF->GetRotation();
     cv::Mat tcw = pKF->GetTranslation();
@@ -965,7 +965,7 @@ int SURFmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, cons
     return nFused;
 }
 
-int SURFmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint)
+int CNNmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint)
 {
     // Get Calibration Parameters for later projection
     const float &fx = pKF->fx;
@@ -1090,7 +1090,7 @@ int SURFmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPo
     return nFused;
 }
 
-int SURFmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> &vpMatches12,
+int CNNmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> &vpMatches12,
                              const float &s12, const cv::Mat &R12, const cv::Mat &t12, const float th)
 {
     const float &fx = pKF1->fx;
@@ -1316,7 +1316,7 @@ int SURFmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> 
     return nFound;
 }
 
-int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
+int CNNmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
 {
     int nmatches = 0;
 
@@ -1531,7 +1531,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame,
     return nmatches;
 }
 
-int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const double SURFdist)
+int CNNmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const double SURFdist)
 {
     int nmatches = 0;
 
@@ -1660,7 +1660,7 @@ int SURFmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const se
     return nmatches;
 }
 
-void SURFmatcher::ComputeThreeMaxima(vector<int>* histo, const int L, int &ind1, int &ind2, int &ind3)
+void CNNmatcher::ComputeThreeMaxima(vector<int>* histo, const int L, int &ind1, int &ind2, int &ind3)
 {
     int max1=0;
     int max2=0;
@@ -1707,7 +1707,7 @@ void SURFmatcher::ComputeThreeMaxima(vector<int>* histo, const int L, int &ind1,
 // Bit set count operation from
 // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
 
-double SURFmatcher::DescriptorDistance(const cv::Mat &a, const cv::Mat &b) {
+double CNNmatcher::DescriptorDistance(const cv::Mat &a, const cv::Mat &b) {
     return cv::norm(a,b,cv::NORM_L2);
 }
 
