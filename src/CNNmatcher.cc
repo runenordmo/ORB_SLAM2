@@ -30,7 +30,7 @@ namespace ORB_SLAM2
 const double CNNmatcher::TH_HIGH = 2000;
 const double CNNmatcher::TH_LOW = 1000;
 const int CNNmatcher::HISTO_LENGTH = 30;
-const bool mbCheckMutualNN = false;
+const bool mbCheckMutualNN = true;
 
 
 CNNmatcher::CNNmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
@@ -403,6 +403,12 @@ int CNNmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
         rotHist[i].reserve(500);
     const float factor = 1.0f/HISTO_LENGTH;
 
+    // Keep track of new matches (to check for mutual NN)
+    vector<int> vMatchedIndices2;
+    vector<double> vMatchedDistance2(F1.mvKeysUn.size(),DBL_MAX);
+    vector<int> vn2Matches21(F2.mvKeysUn.size(),-1);
+    vector<int> vn2Matches12(F1.mvKeysUn.size(),-1);
+
     vector<double> vMatchedDistance(F2.mvKeysUn.size(),DBL_MAX);
     vector<int> vnMatches21(F2.mvKeysUn.size(),-1);
 
@@ -472,10 +478,98 @@ int CNNmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
                     assert(bin>=0 && bin<HISTO_LENGTH);
                     rotHist[bin].push_back(i1);
                 }
+
+                if(mbCheckMutualNN)
+                {
+                    vMatchedIndices2.push_back(bestIdx2);
+                }
             }
         }
 
     }
+
+    if (mbCheckMutualNN)
+    {
+        //cout << "before: " << nmatches << endl;
+        // For every match previously found going 
+        // from LastFrame (1) to CurrentFrame (2)
+
+        for(int i=0; i<vMatchedIndices2.size(); i++)
+        {
+            int i2 = vMatchedIndices2[i];
+
+            cv::KeyPoint kp2 = F2.mvKeysUn[i2];
+            int level2 = kp2.octave;
+            if(level2>1) // default: 0
+                continue;
+
+            vector<size_t> vIndices1 = F1.GetFeaturesInArea(F1.mvKeys[vnMatches21[i2]].pt.x,F1.mvKeys[vnMatches21[i2]].pt.y, windowSize,level2,level2);
+
+            if(vIndices1.empty())
+                continue;
+
+            cv::Mat d2 = F2.mDescriptors.row(i2);
+
+            double bestDist = DBL_MAX;
+            double bestDist2 = DBL_MAX;
+            int bestIdx1 = -1;
+
+            // Find best match going 
+            // from CurrentFrame (2) to LastFrame (1)
+
+            for(vector<size_t>::iterator vit=vIndices1.begin(); vit!=vIndices1.end(); vit++)
+            {
+                size_t i1 = *vit;
+
+                cv::Mat d1 = F1.mDescriptors.row(i1);
+
+                double dist = DescriptorDistance(d1,d2);
+
+                if(vMatchedDistance2[i1]<=dist)
+                    continue;
+
+                if(dist<bestDist)
+                {
+                    bestDist2=bestDist;
+                    bestDist=dist;
+                    bestIdx1=i1;
+                }
+                else if(dist<bestDist2)
+                {
+                    bestDist2=dist;
+                }
+            }
+
+            if(bestDist<=TH_LOW)
+            {
+                if(bestDist<(float)bestDist2*mfNNratio)
+                {
+                    if(vn2Matches12[bestIdx1]>=0)
+                    {
+                        vn2Matches21[vn2Matches12[bestIdx1]]=-1;
+                    }
+                    vn2Matches21[i2]=bestIdx1;
+                    vn2Matches12[bestIdx1]=i2;
+                    vMatchedDistance2[bestIdx1]=bestDist;
+                }
+            }
+        }
+
+            // Discard matches which are not
+            // bestMatches in both directions
+        for(int i=0; i<vMatchedIndices2.size(); i++)
+        {
+            int idx2 = vMatchedIndices2[i];
+
+            if (vnMatches21[idx2] != vn2Matches21[idx2])
+            {
+                //cout << "Bad" << endl;
+                vnMatches12[vnMatches21[idx2]] = -1;
+                nmatches--;
+            }
+        }
+    }
+    //cout << "after: " << nmatches << endl;
 
     if(mbCheckOrientation)
     {
