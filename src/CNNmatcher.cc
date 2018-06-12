@@ -28,9 +28,9 @@ namespace ORB_SLAM2
 
 
 const double CNNmatcher::TH_HIGH = 11000;
-const double CNNmatcher::TH_LOW = 4000;
+const double CNNmatcher::TH_LOW = 5000;
 const int CNNmatcher::HISTO_LENGTH = 30;
-const bool mbCheckMutualNN = true;
+const bool mbCheckMutualNN = false;
 
 
 CNNmatcher::CNNmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
