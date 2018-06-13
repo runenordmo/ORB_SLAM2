@@ -646,7 +646,7 @@ void LocalMapping::KeyFrameCulling()
         
         int nObs;
         if(mbMonocular)
-            nObs = 5;
+            nObs = 4;
         else
             nObs = 3;
 
