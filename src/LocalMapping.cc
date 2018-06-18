@@ -20,7 +20,7 @@
 
 #include "LocalMapping.h"
 #include "LoopClosing.h"
-#include "ORBmatcher.h"
+#include "CNNmatcher.h"
 #include "Optimizer.h"
 
 #include<mutex>
@@ -212,7 +212,7 @@ void LocalMapping::CreateNewMapPoints()
         nn=20;
     const vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
 
-    ORBmatcher matcher(0.6,false);
+    CNNmatcher matcher(0.6,false);
 
     cv::Mat Rcw1 = mpCurrentKeyFrame->GetRotation();
     cv::Mat Rwc1 = Rcw1.t();
@@ -480,7 +480,7 @@ void LocalMapping::SearchInNeighbors()
 
 
     // Search matches by projection from current KF in target KFs
-    ORBmatcher matcher;
+    CNNmatcher matcher;
     vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
     for(vector<KeyFrame*>::iterator vit=vpTargetKFs.begin(), vend=vpTargetKFs.end(); vit!=vend; vit++)
     {
@@ -643,8 +643,13 @@ void LocalMapping::KeyFrameCulling()
         if(pKF->mnId==0)
             continue;
         const vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
+        
+        int nObs;
+        if(mbMonocular)
+            nObs = 5;
+        else
+            nObs = 3;
 
-        int nObs = 3;
         const int thObs=nObs;
         int nRedundantObservations=0;
         int nMPs=0;

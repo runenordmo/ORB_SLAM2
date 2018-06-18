@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(DBoW2)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -Wno-deprecated -O3 -march=native ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
 
 set(HDRS_DBOW2
   DBoW2/BowVector.h
@@ -10,12 +10,14 @@ set(HDRS_DBOW2
   DBoW2/FClass.h       
   DBoW2/FeatureVector.h
   DBoW2/ScoringObject.h   
-  DBoW2/TemplatedVocabulary.h)
+  DBoW2/TemplatedVocabulary.h
+  DBoW2/FCNN.h)
 set(SRCS_DBOW2
   DBoW2/BowVector.cpp
   DBoW2/FORB.cpp      
   DBoW2/FeatureVector.cpp
-  DBoW2/ScoringObject.cpp)
+  DBoW2/ScoringObject.cpp
+  DBoW2/FCNN.cpp)
 
 set(HDRS_DUTILS
   DUtils/Random.h

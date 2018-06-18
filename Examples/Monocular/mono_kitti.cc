@@ -36,12 +36,16 @@ void LoadImages(const string &strSequence, vector<string> &vstrImageFilenames,
 
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    if(argc != 6)
     {
-        cerr << endl << "Usage: ./mono_kitti path_to_vocabulary path_to_settings path_to_sequence" << endl;
+        cerr << endl << "Usage: ./mono_kitti path_to_vocabulary path_to_settings path_to_sequence path_to_descriptor_file visualize(true || false)" << endl;
         return 1;
     }
-
+    if(string(argv[5]) != "true" && string(argv[5]) != "false")
+    {
+        cerr << endl << "Usage: arg 5: visualize (true || false)" << endl;
+        return 1;
+    }
     // Retrieve paths to images
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
@@ -50,7 +54,8 @@ int main(int argc, char **argv)
     int nImages = vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,string(argv[5]) == "true",string(argv[4]),"noRightDescriptorFile");
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -61,17 +66,27 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
+#ifdef __APPLE__
+    int main_error = 0;
+    std::thread runthread([&]() { // Sart in new thread}
+#endif
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image from file
         im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
         double tframe = vTimestamps[ni];
+        int frameNumber = ni;
 
         if(im.empty())
         {
             cerr << endl << "Failed to load image at: " << vstrImageFilenames[ni] << endl;
+#ifdef __APPLE__
+            main_error = 1;
+            return;
+#else
             return 1;
+#endif
         }
 
 #ifdef COMPILEDWITHC11
@@ -81,7 +96,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im,tframe);
+        SLAM.TrackMonocular(im,tframe,frameNumber);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -103,6 +118,17 @@ int main(int argc, char **argv)
         if(ttrack<T)
             usleep((T-ttrack)*1e6);
     }
+#ifdef __APPLE__
+    }); // End the thread
+
+    // Start the visualization thread
+    SLAM.StartViewer();
+    cout<< "Viewer started, waiting for thread." << endl;
+    runthread.join();
+    if (main_error != 0)
+        return main_error;
+    cout << "Tracking thread joined..." << endl;
+#endif
 
     // Stop all threads
     SLAM.Shutdown();

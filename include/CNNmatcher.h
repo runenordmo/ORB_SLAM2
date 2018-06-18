@@ -1,26 +1,9 @@
-/**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+//
+// Created by rune on 08.04.18.
+//
 
-
-#ifndef ORBMATCHER_H
-#define ORBMATCHER_H
+#ifndef CNNMATCHER_H
+#define CNNMATCHER_H
 
 #include<vector>
 #include<opencv2/core/core.hpp>
@@ -30,21 +13,17 @@
 #include"KeyFrame.h"
 #include"Frame.h"
 
+namespace ORB_SLAM2{
 
-namespace ORB_SLAM2
-{
-
-class ORBmatcher
-{    
+class CNNmatcher {
 public:
 
-    ORBmatcher(float nnratio=0.6, bool checkOri=true);
+    CNNmatcher(float nnratio=0.6, bool checkOri=false);
 
-    // Computes the Hamming distance between two ORB descriptors
-    static int DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
+    // Computes the euclidean distance between two CNN descriptors
+    static double DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
 
-
-    static const int TH_LOW;
+    static const double TH_LOW;
     // Search matches between Frame keypoints and projected MapPoints. Returns number of matches
     // Used to track the local map (Tracking)
     int SearchByProjection(Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3);
@@ -55,7 +34,7 @@ public:
 
     // Project MapPoints seen in KeyFrame into the Frame and search matches.
     // Used in relocalisation (Tracking)
-    int SearchByProjection(Frame &CurrentFrame, KeyFrame* pKF, const std::set<MapPoint*> &sAlreadyFound, const float th, const int ORBdist);
+    int SearchByProjection(Frame &CurrentFrame, KeyFrame* pKF, const std::set<MapPoint*> &sAlreadyFound, const float th, const double ORBdist);
 
     // Project MapPoints using a Similarity Transformation and search matches.
     // Used in loop detection (Loop Closing)
@@ -85,7 +64,7 @@ public:
     int Fuse(KeyFrame* pKF, cv::Mat Scw, const std::vector<MapPoint*> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint);
 
 public:
-    static const int TH_HIGH;
+    static const double TH_HIGH;
     static const int HISTO_LENGTH;
 
 
@@ -101,6 +80,6 @@ protected:
     bool mbCheckOrientation;
 };
 
-}// namespace ORB_SLAM
+} //namespace ORB_SLAM
 
-#endif // ORBMATCHER_H
+#endif // CNNMATCHER_H

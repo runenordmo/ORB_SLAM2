@@ -7,8 +7,8 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -march=native")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -Wno-deprecated  -O3 -march=native ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated   -O3 -march=native")
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -68,15 +68,27 @@ src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
-)
+src/CNNmatcher.cc 
+src/CNNextractor.cc)
 
-target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${Pangolin_LIBRARIES}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-)
+if(APPLE)
+   target_link_libraries(${PROJECT_NAME}
+   ${OpenCV_LIBS}
+   ${EIGEN3_LIBS}
+   ${Pangolin_LIBRARIES}
+   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.dylib
+   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.dylib
+   )
+else()
+   target_link_libraries(${PROJECT_NAME}
+   ${OpenCV_LIBS}
+   ${EIGEN3_LIBS}
+   ${Pangolin_LIBRARIES}
+   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+   )
+endif()
+
 
 # Build examples
 
@@ -111,3 +123,6 @@ add_executable(mono_euroc
 Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Vocabulary)
+add_executable(bin_vocabulary Vocabulary/bin_vocabulary.cpp)
+target_link_libraries(bin_vocabulary ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.dylib ${OpenCV_LIBS})

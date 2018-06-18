@@ -26,11 +26,19 @@
 #include <pangolin/pangolin.h>
 #include <iomanip>
 
+static bool has_suffix(const std::string &str, const std::string &suffix)
+{
+    std::size_t index = str.find(suffix, str.size() - suffix.size());
+    return (index != std::string::npos);
+}
+
 namespace ORB_SLAM2
 {
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
+               const bool bUseViewer,const std::string &descriptorFile, 
+               const std::string &descriptorFileRight):mSensor(sensor), 
+        mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
         mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
@@ -59,10 +67,25 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 
     //Load ORB Vocabulary
-    cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+    cout << endl << "Loading ";
 
     mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    //mpVocabulary = new CNNVocabulary();
+    bool bVocLoad = false; // chose loading method based on file extension
+    if(has_suffix(strVocFile, ".bin"))
+    {
+        cout <<" binary Vocabulary..." << endl;
+        bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+    }
+    else if (has_suffix(strVocFile, ".txt"))
+    {
+        cout <<" txt Vocabulary. This could take a while..." << endl;
+        bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    }
+    else
+    {
+        bVocLoad = false;
+    }
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;
@@ -70,6 +93,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         exit(-1);
     }
     cout << "Vocabulary loaded!" << endl << endl;
+
+    cout << "Vocabulary information: " << endl
+  << *mpVocabulary << endl << endl;
 
     //Create KeyFrame Database
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
@@ -84,7 +110,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor,
+                             descriptorFile, descriptorFileRight);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
@@ -98,7 +125,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     if(bUseViewer)
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+#ifdef __APPLE__
+        // Start visualisation thread on the main loop using StartViewer instead
+#else
         mptViewer = new thread(&Viewer::Run, mpViewer);
+#endif
         mpTracker->SetViewer(mpViewer);
     }
 
@@ -113,7 +144,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser->SetLocalMapper(mpLocalMapper);
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=STEREO)
     {
@@ -155,7 +186,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
+    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
@@ -215,7 +246,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return Tcw;
 }
 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
+cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const int &frameNumber)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -257,7 +288,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp,frameNumber);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
@@ -307,6 +338,9 @@ void System::Shutdown()
         mpViewer->RequestFinish();
         while(!mpViewer->isFinished())
             usleep(5000);
+
+        delete mpViewer;
+        mpViewer = static_cast<Viewer*>(NULL);
     }
 
     // Wait until all thread have effectively stopped
@@ -487,6 +521,12 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 {
     unique_lock<mutex> lock(mMutexState);
     return mTrackedKeyPointsUn;
+}
+
+void System::StartViewer()
+{
+    if(mpViewer)
+        mpViewer->Run();
 }
 
 } //namespace ORB_SLAM

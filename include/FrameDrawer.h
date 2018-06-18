@@ -31,6 +31,10 @@
 #include<mutex>
 
 
+//ADDED
+#include "CNNextractor.h"
+
+
 namespace ORB_SLAM2
 {
 
@@ -46,7 +50,7 @@ public:
     void Update(Tracking *pTracker);
 
     // Draw last processed frame.
-    cv::Mat DrawFrame();
+    cv::Mat DrawFrame(bool menuDebug);
 
 protected:
 
@@ -66,6 +70,9 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+
+    int nIniMatches;
+
 };
 
 } //namespace ORB_SLAM

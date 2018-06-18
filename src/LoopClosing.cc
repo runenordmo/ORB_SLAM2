@@ -26,7 +26,7 @@
 
 #include "Optimizer.h"
 
-#include "ORBmatcher.h"
+#include "CNNmatcher.h"
 
 #include<mutex>
 #include<thread>
@@ -236,7 +236,7 @@ bool LoopClosing::ComputeSim3()
 
     // We compute first ORB matches for each candidate
     // If enough matches are found, we setup a Sim3Solver
-    ORBmatcher matcher(0.75,true);
+    CNNmatcher matcher(0.75,false);
 
     vector<Sim3Solver*> vpSim3Solvers;
     vpSim3Solvers.resize(nInitialCandidates);
@@ -586,7 +586,7 @@ void LoopClosing::CorrectLoop()
 
 void LoopClosing::SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap)
 {
-    ORBmatcher matcher(0.8);
+    CNNmatcher matcher(0.8,false);
 
     for(KeyFrameAndPose::const_iterator mit=CorrectedPosesMap.begin(), mend=CorrectedPosesMap.end(); mit!=mend;mit++)
     {
